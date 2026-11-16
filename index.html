@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nova Neruda · Avaliação de Qualidade Esteira</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23352040'/%3E%3Cg fill='%23c9b6d6'%3E%3Ccircle cx='11' cy='13' r='4'/%3E%3Ccircle cx='20' cy='13' r='4'/%3E%3Ccircle cx='15.5' cy='20' r='4'/%3E%3C/g%3E%3Cpath d='M16 4v6' stroke='%237fa65a' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#352040">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nova Neruda">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icones/icone-180.png">
+<!-- gerador de PDF: cópia local (funciona sem internet); se faltar, busca na CDN -->
+<script src="vendor/jspdf.umd.min.js"></script>
+<script>window.jspdf||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>')</script>
+<script src="vendor/jspdf.plugin.autotable.min.js"></script>
+<script>(window.jspdf&&window.jspdf.jsPDF&&window.jspdf.jsPDF.API.autoTable)||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"><\/script>')</script>
+<style>
+:root{
+  --uva:#352040; --uva-2:#5a3a6b; --uva-3:#c9b6d6; --lilas:#efe9f3;
+  --papel:#f7f6f3; --linha:#dcd8e0; --tinta:#1f1a24; --cinza:#6b6573;
+  --ok:#3f7d3a; --ok-bg:#e6f1e2; --nok:#b3362b; --nok-bg:#f8e3e0; --alerta:#a86a12;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Barlow,system-ui,sans-serif;font-size:16px;line-height:1.45;color:var(--tinta);background:var(--papel)}
+h1,h2,h3,.cond{font-family:"Barlow Semi Condensed",Barlow,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--uva-2);outline-offset:2px}
+
+/* topo */
+.topo{background:var(--uva);color:#fff;position:sticky;top:0;z-index:20}
+.topo-in{max-width:980px;margin:0 auto;padding:12px 16px 0;display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 20px}
+.marca{display:flex;align-items:center;gap:10px;padding-bottom:12px;margin-right:auto}
+.marca svg{flex:none}
+.marca h1{margin:0;font-size:20px;line-height:1.1;font-weight:700}
+.marca small{display:block;font-size:13px;color:var(--uva-3);font-weight:500;font-family:Barlow}
+.abas{display:flex;gap:2px}
+.abas button{background:none;border:0;color:var(--uva-3);padding:10px 14px 12px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent}
+.abas button[aria-selected=true]{color:#fff;border-bottom-color:#9fc77a}
+.abas button:hover{color:#fff}
+
+main{max-width:980px;margin:0 auto;padding:16px 16px 140px}
+.vista[hidden]{display:none}
+
+/* placar fixo */
+.placar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:#fff;border-top:1px solid var(--linha);box-shadow:0 -6px 20px rgba(53,32,64,.08)}
+.placar-in{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px}
+.nota{display:flex;align-items:baseline;gap:6px}
+.nota b{font-family:"Barlow Semi Condensed";font-size:38px;line-height:1;color:var(--uva)}
+.nota span{color:var(--cinza);font-size:14px;white-space:nowrap}
+.nota.baixa b{color:var(--nok)}
+.barras{flex:1;display:flex;gap:3px;height:10px;min-width:60px}
+.barras i{flex:var(--p);border-radius:2px;background:var(--ok)}
+.barras i.parcial{background:var(--alerta)}
+.barras i.zero{background:var(--nok)}
+.barras i.vazio{background:var(--linha)}
+
+/* botões */
+.btn{border:0;border-radius:var(--r);padding:12px 18px;font-weight:600;cursor:pointer;background:var(--lilas);color:var(--uva);white-space:nowrap}
+.btn:hover{background:#e3d9ea}
+.btn.pri{background:var(--uva);color:#fff}
+.btn.pri:hover{background:var(--uva-2)}
+.btn.peq{padding:7px 12px;font-size:14px}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* blocos */
+.bloco{background:#fff;border:1px solid var(--linha);border-radius:14px;margin-bottom:14px}
+.bloco>header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--linha)}
+.bloco>header h2{margin:0;font-size:19px;font-weight:700;flex:1}
+.bloco>header .num{width:28px;height:28px;border-radius:50%;background:var(--lilas);color:var(--uva);display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.corpo{padding:14px 16px}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px 14px}
+.grade .larga{grid-column:1/-1}
+.campo{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--cinza);font-weight:500}
+.campo input,.campo select,.campo textarea{border:1px solid var(--linha);border-radius:8px;padding:10px 11px;background:#fff;color:var(--tinta);font-size:16px;width:100%}
+.campo textarea{min-height:130px;resize:vertical}
+.campo input:focus,.campo select:focus,.campo textarea:focus{border-color:var(--uva-2);outline:none;box-shadow:0 0 0 3px var(--lilas)}
+.dica{font-size:13px;color:var(--cinza)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chips span{background:var(--lilas);color:var(--uva);padding:3px 9px;border-radius:20px;font-size:13px;font-weight:600}
+
+/* selo de tópico */
+.selo{font-size:14px;font-weight:700;padding:5px 10px;border-radius:20px;white-space:nowrap;font-family:"Barlow Semi Condensed"}
+.selo.ok{background:var(--ok-bg);color:var(--ok)}
+.selo.nok{background:var(--nok-bg);color:var(--nok)}
+.selo.parc{background:#f6ead6;color:var(--alerta)}
+.selo.neutro{background:var(--lilas);color:var(--uva)}
+
+/* linhas de defeito */
+.itens{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:1fr 110px 64px 40px;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--linha)}
+.item:last-child{border-bottom:0}
+.item input{border:1px solid var(--linha);border-radius:8px;padding:9px 10px;text-align:right;width:100%;font-size:16px}
+.item .pct{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--cinza)}
+.item.total{font-weight:700;border-top:2px solid var(--linha);border-bottom:0;margin-top:2px}
+.item.total .pct{color:var(--tinta)}
+.limite{font-size:14px;color:var(--cinza);margin-top:8px}
+
+/* amostras */
+.amostras{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.amostras input{border:1px solid var(--linha);border-radius:8px;padding:10px;text-align:center;width:100%;font-size:17px}
+.stats{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--cinza);margin-top:8px}
+.stats b{color:var(--tinta);font-variant-numeric:tabular-nums}
+
+/* conforme */
+.par{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px dashed var(--linha)}
+.par:last-child{border-bottom:0}
+.seg{display:inline-flex;border:1px solid var(--linha);border-radius:10px;overflow:hidden;flex:none}
+.seg button{border:0;background:#fff;padding:9px 14px;font-weight:600;cursor:pointer;color:var(--cinza)}
+.seg button+button{border-left:1px solid var(--linha)}
+.seg button[aria-pressed=true].sim{background:var(--ok);color:#fff}
+.seg button[aria-pressed=true].nao{background:var(--nok);color:#fff}
+
+/* assinatura */
+.assin{border:1px dashed var(--uva-3);border-radius:10px;background:#fcfbfd;touch-action:none;width:100%;height:150px;display:block;cursor:crosshair}
+
+/* tela inicial */
+.ola{margin:6px 0 16px}
+.ola .dia{margin:0;color:var(--cinza);font-size:15px;text-transform:none}
+.ola h2{margin:2px 0 0;font-size:30px;line-height:1.1;color:var(--uva)}
+.btn.grande{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:17px 18px;font-size:18px;border-radius:14px}
+.btn.grande svg{width:22px;height:22px}
+#novaAval{margin-bottom:14px}
+.andamento{display:flex;align-items:center;gap:14px;background:#fff;border:1.5px solid var(--uva-3);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.andamento .txt{flex:1;min-width:0}
+.andamento b{display:block;font-size:16px}
+.andamento span{color:var(--cinza);font-size:14px}
+.numeros{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.numeros div{background:#fff;border:1px solid var(--linha);border-radius:12px;padding:10px 12px}
+.numeros b{display:block;font-family:"Barlow Semi Condensed";font-size:26px;line-height:1.1;color:var(--uva)}
+.numeros span{font-size:13px;color:var(--cinza)}
+.destino{font-size:14px;color:var(--cinza);background:var(--lilas);border-radius:10px;padding:10px 12px;margin-bottom:20px}
+.destino b{color:var(--uva)}
+.sec-tit{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 8px}
+.sec-tit h3{margin:0;font-size:18px}
+.link{border:0;background:none;color:var(--uva-2);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:4px}
+.btn.wa{background:#1f8f4e;color:#fff}
+.btn.wa:hover{background:#18763f}
+/* diálogo de fim */
+.fundo{position:fixed;inset:0;background:rgba(31,26,36,.55);z-index:45;display:flex;align-items:flex-end;justify-content:center}
+.fundo[hidden]{display:none}
+.folha{background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:22px 18px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;text-align:center;animation:sobe .22s ease-out}
+@media (min-width:620px){.fundo{align-items:center}.folha{border-radius:20px}}
+@keyframes sobe{from{transform:translateY(30px);opacity:0}}
+.fim-nota b{font-family:"Barlow Semi Condensed";font-size:56px;line-height:1;color:var(--uva)}
+.fim-nota.baixa b{color:var(--nok)}
+.fim-nota span{color:var(--cinza)}
+.folha h2{margin:0;font-size:20px}
+.folha p{margin:0 0 6px}
+.fim-linha{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* adicionar opção na hora */
+.sel-add{display:flex;gap:6px}
+.sel-add[hidden],.add-linha[hidden]{display:none}
+.sel-add select{flex:1;min-width:0}
+.mais{flex:none;width:44px;border:1px solid var(--linha);border-radius:8px;background:#fff;color:var(--uva);font-size:22px;font-weight:600;line-height:1;cursor:pointer}
+.mais:hover{background:var(--lilas);border-color:var(--uva-3)}
+.add-linha{display:flex;gap:6px}
+.add-linha input{flex:1 1 140px;min-width:0}
+
+/* classe: botões */
+.opcoes{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:2px}
+.pilulas{display:flex;flex-wrap:wrap;gap:6px}
+.pilulas button{border:1.5px solid var(--linha);background:#fff;color:var(--tinta);border-radius:999px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:15px}
+.pilulas button:hover{border-color:var(--uva-3)}
+.pilulas button[aria-pressed=true]{background:var(--uva);border-color:var(--uva);color:#fff}
+
+/* histórico */
+.lista{display:flex;flex-direction:column;gap:8px}
+.reg{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:14px;background:#fff;border:1px solid var(--linha);border-radius:12px;padding:12px 14px}
+.reg .n{font-family:"Barlow Semi Condensed";font-size:28px;font-weight:700;color:var(--uva);text-align:center}
+.reg .n.baixa{color:var(--nok)}
+.reg h3{margin:0;font-size:17px}
+.reg p{margin:2px 0 0;color:var(--cinza);font-size:14px}
+.reg .acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.vazio{text-align:center;padding:48px 16px;color:var(--cinza)}
+.vazio h3{color:var(--tinta);margin:0 0 6px}
+.busca{display:flex;gap:10px;margin-bottom:12px}
+.busca input{flex:1;border:1px solid var(--linha);border-radius:10px;padding:11px 12px;font-size:16px}
+
+/* config */
+table.cfg{width:100%;border-collapse:collapse}
+.cfg th,.cfg td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--linha);font-size:15px}
+.cfg th{color:var(--cinza);font-weight:600;font-size:13px}
+.cfg input{width:90px;border:1px solid var(--linha);border-radius:8px;padding:7px 8px;text-align:right}
+
+.fotos{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.foto{position:relative;width:124px;border-radius:8px;overflow:hidden;background:#fff;border:1px solid var(--linha);display:flex;flex-direction:column}
+.foto img{width:100%;height:120px;object-fit:cover;display:block;cursor:zoom-in;background:var(--lilas)}
+.foto .leg{padding:5px 6px 6px;font-size:11.5px;line-height:1.3;color:var(--cinza)}
+.foto .leg b{color:var(--tinta);font-weight:600}
+.foto select{width:100%;border:1px solid var(--linha);border-radius:6px;padding:4px;font-size:12px;margin-bottom:3px;background:#fff}
+.foto button{position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(31,26,36,.75);color:#fff;font-size:15px;line-height:1;cursor:pointer}
+.add-foto{width:124px;min-height:120px;border:1.5px dashed var(--uva-3);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--uva);font-size:12px;font-weight:600;cursor:pointer;background:#fcfbfd;text-align:center}
+.add-foto:hover{background:var(--lilas)}
+.add-foto input{position:absolute;width:1px;height:1px;opacity:0}
+.add-foto svg{width:22px;height:22px}
+.zoom{position:fixed;inset:0;background:rgba(20,14,24,.92);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.zoom[hidden]{display:none}
+.zoom{flex-direction:column;gap:10px}
+.zoom img{max-width:100%;max-height:82vh;border-radius:8px}
+.zoom p{color:#fff;margin:0;text-align:center;font-size:14px;line-height:1.5}
+.zoom button{position:absolute;top:14px;right:14px}
+.cam{position:relative;width:40px;height:40px;border-radius:8px;border:1px solid var(--linha);display:grid;place-items:center;color:var(--uva);cursor:pointer;background:#fff}
+.cam:hover{background:var(--lilas)}
+.cam.tem{background:var(--lilas);border-color:var(--uva-3)}
+.cam input{position:absolute;width:1px;height:1px;opacity:0}
+.cam svg{width:19px;height:19px}
+.cam small{position:absolute;top:-6px;right:-6px;background:var(--uva);color:#fff;border-radius:10px;font-size:10.5px;font-weight:700;padding:0 5px;line-height:16px}
+.amostra{display:flex;gap:4px;align-items:center}
+.amostra .cam{width:34px;height:42px;flex:none}
+.aviso{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--tinta);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;transition:.2s;z-index:40;pointer-events:none}
+.aviso.on{opacity:1;transform:translateX(-50%)}
+.rodape{text-align:center;font-size:12px;color:var(--cinza);padding:28px 0 0}
+
+@media (max-width:620px){
+  .marca h1{font-size:18px}
+  .abas{width:100%}
+  .abas button{flex:1;padding:10px 6px 12px}
+  .item{grid-template-columns:1fr 84px 56px 40px;gap:8px}
+  .amostras{grid-template-columns:repeat(2,1fr)}
+  .reg{grid-template-columns:52px 1fr}
+  .reg .acoes{grid-column:1/-1;justify-content:stretch}
+  .reg .acoes .btn{flex:1}
+  .placar-in .btn.sec{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-in">
+    <div class="marca">
+      <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#4a2d58"/><g fill="#c9b6d6"><circle cx="11" cy="13" r="4"/><circle cx="20" cy="13" r="4"/><circle cx="15.5" cy="20" r="4"/></g><path d="M16 4v6" stroke="#9fc77a" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <div><h1>Nova Neruda</h1><small>Avaliação de qualidade · esteira</small></div>
+    </div>
+    <nav class="abas" role="tablist">
+      <button role="tab" aria-selected="true" data-vista="inicio">Início</button>
+      <button role="tab" aria-selected="false" data-vista="avaliar">Avaliar</button>
+      <button role="tab" aria-selected="false" data-vista="historico">Histórico</button>
+      <button role="tab" aria-selected="false" data-vista="ajustes">Ajustes</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- INÍCIO -->
+  <section class="vista" id="v-inicio">
+    <div class="ola">
+      <p class="dia" id="hojeTxt"></p>
+      <h2 id="saudacao">Boa tarde</h2>
+    </div>
+    <div id="andamento"></div>
+    <button class="btn pri grande" id="novaAval">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      Nova avaliação
+    </button>
+    <div class="numeros" id="numeros"></div>
+    <div class="destino" id="destinoWa"></div>
+    <div class="sec-tit"><h3>Últimas avaliações</h3><button class="link" data-ir="historico">Ver todas</button></div>
+    <div class="lista" id="ultimas"></div>
+  </section>
+
+  <!-- AVALIAR -->
+  <section class="vista" id="v-avaliar" hidden>
+    <div id="form"></div>
+  </section>
+
+  <!-- HISTÓRICO -->
+  <section class="vista" id="v-historico" hidden>
+    <div class="busca">
+      <input id="busca" type="search" placeholder="Buscar por lote, pallet, cliente ou operador">
+    </div>
+    <div class="lista" id="lista"></div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section class="vista" id="v-ajustes" hidden>
+    <div class="bloco">
+      <header><h2>Envio do PDF pelo WhatsApp</h2></header>
+      <div class="corpo grade">
+        <label class="campo">Nome do dono<input id="cfgDonoNome" type="text" placeholder="Ex.: Sr. Neruda"></label>
+        <label class="campo">WhatsApp do dono (com DDD)<input id="cfgDonoFone" type="tel" inputmode="tel" placeholder="(87) 99999-9999"></label>
+        <p class="larga dica" style="margin:0">Ao finalizar, o app abre o WhatsApp com o PDF anexado e a mensagem pronta. Se o celular não permitir anexar direto, o PDF é baixado e a conversa com o dono abre para você anexar.</p>
+      </div>
+    </div>
+    <div class="bloco">
+      <header><h2>Limites e pontos por tópico</h2></header>
+      <div class="corpo">
+        <p class="dica" style="margin-top:0">Dentro do limite, o tópico vale os pontos inteiros. Acima do limite, perde pontos na proporção do excesso (no dobro do limite, zera).</p>
+        <table class="cfg" id="cfgTopicos"></table>
+      </div>
+    </div>
+    <div class="bloco">
+      <header><h2>Listas de opções</h2></header>
+      <div class="corpo grade" id="cfgListas"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn pri" id="salvarCfg">Salvar ajustes</button>
+      <button class="btn" id="restaurarCfg">Voltar ao padrão</button>
+      <button class="btn" id="exportar">Copiar backup</button>
+    </div>
+  </section>
+
+  <p class="rodape">© <span id="ano"></span> Ângelo Eduardo. Todos os direitos reservados.</p>
+</main>
+
+<div class="placar" id="placar">
+  <div class="placar-in">
+    <div class="nota" id="nota"><b>100</b><span>/ 100</span></div>
+    <div class="barras" id="barras"></div>
+    <button class="btn" id="salvarBtn">Salvar</button>
+    <button class="btn pri" id="finalizarBtn">Finalizar</button>
+  </div>
+</div>
+<div class="aviso" id="aviso" role="status"></div>
+<div class="fundo" id="fim" hidden>
+  <div class="folha" role="dialog" aria-modal="true" aria-labelledby="fimTit">
+    <div class="fim-nota"><b id="fimNota">100</b><span>/ 100</span></div>
+    <h2 id="fimTit">Avaliação finalizada</h2>
+    <p class="dica" id="fimDesc"></p>
+    <button class="btn wa grande" id="fimWa">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>
+      <span id="fimWaTxt">Enviar PDF no WhatsApp</span>
+    </button>
+    <button class="btn grande" id="fimBaixar">Baixar PDF</button>
+    <div class="fim-linha">
+      <button class="btn" id="fimNova">Nova avaliação</button>
+      <button class="btn" id="fimInicio">Ir para o início</button>
+    </div>
+  </div>
+</div>
+<div class="zoom" id="zoom" hidden><img alt="Foto ampliada"><p id="zoomInfo"></p><button class="btn" id="zoomFechar">Fechar</button></div>
+
+<script>
+/* ============ dados padrão ============ */
+const TOPICOS_PADRAO = [
+  {id:'podridao', nome:'Podridão / fungos', tipo:'peso', pts:38, lim:0.5, itens:['Botrytis (mofo cinzento)','Penicillium / outros fungos','Podridão ácida']},
+  {id:'danos', nome:'Danos físicos', tipo:'peso', pts:18, lim:1.0, itens:['Bagas estouradas / rachadura','Amassadas','Corte / ferimento']},
+  {id:'aquosos', nome:'Cachos aquosos / translúcidos', tipo:'unid', pts:5, lim:0},
+  {id:'degrana', nome:'Degrana', tipo:'peso', pts:5, lim:2.5, itens:['Bagas soltas']},
+  {id:'leves', nome:'Defeitos leves', tipo:'peso', pts:18, lim:3.0, itens:['Manchas / russeting','Bagas pequenas','Outros leves']},
+  {id:'desid', nome:'Desidratação (ráquis e pedicelo)', tipo:'peso', pts:5, lim:2.0, itens:['Nível 1 · pedicelos levemente desidratados','Nível 2 · pedicelos + engaço iniciando','Nível 3 · pedicelos + engaço secos']},
+  {id:'calibre', nome:'Descalibre', tipo:'calibre', pts:6, lim:20},
+  {id:'cor', nome:'Coloração', tipo:'cor', pts:5, lim:0},
+];
+const LISTAS_PADRAO = {
+  operadores:'Emilayne',
+  avaliadores:'Controle qualidade 3',
+  clientes:'ME',
+  variedades:'BRS NÚBIA\nBRS VITÓRIA\nARRA 15',
+  embalagens:'SACOLA 8,0KG\nCUMBUCA 500G\nCAIXA 4,5KG',
+  outros:'Ausência de inseto - exportação\nPresença de inseto'
+};
+
+/* ============ armazenamento ============ */
+const LS = {
+  get(k,d){try{const v=localStorage.getItem('nn:'+k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('nn:'+k,JSON.stringify(v));return true}catch(e){return false}}
+};
+const IDB = {
+  db:null,
+  async abrir(){ if(this.db) return this.db; this.db = await new Promise((ok,err)=>{ const r=indexedDB.open('nova-neruda',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>ok(r.result); r.onerror=()=>err(r.error); }); return this.db; },
+  async get(k){ try{ const db=await this.abrir(); return await new Promise(ok=>{ const r=db.transaction('kv').objectStore('kv').get(k); r.onsuccess=()=>ok(r.result); r.onerror=()=>ok(undefined); }); }catch(e){ return undefined; } },
+  async set(k,v){ try{ const db=await this.abrir(); return await new Promise(ok=>{ const t=db.transaction('kv','readwrite'); t.objectStore('kv').put(v,k); t.oncomplete=()=>ok(true); t.onerror=()=>ok(false); }); }catch(e){ return false; } }
+};
+let cfg = LS.get('cfg', null) || {topicos:structuredClone(TOPICOS_PADRAO), listas:{...LISTAS_PADRAO}};
+let historico = [];
+let A; // avaliação atual
+
+const $ = s => document.querySelector(s);
+const num = v => { if(v===''||v==null) return NaN; return parseFloat(String(v).replace(/\s/g,'').replace(',','.')); };
+const br = (v,d=2) => isFinite(v) ? v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}) : '–';
+const lista = k => (cfg.listas[k]||'').split('\n').map(s=>s.trim()).filter(Boolean);
+const agora = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); };
+const hoje = () => agora().slice(0,10);
+const dataBR = s => s ? s.slice(0,10).split('-').reverse().join('/') + (s.length>10?' '+s.slice(11,16):'') : '';
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function novaAvaliacao(){
+  const ult = historico[0]?.info || {};
+  return {
+    id: Date.now().toString(36),
+    info:{
+      receb:hoje(), embal:hoje(), avaliacao:agora(),
+      operador: ult.operador || lista('operadores')[0] || '',
+      avaliador: ult.avaliador || lista('avaliadores')[0] || '',
+      pallets:'', cat: ult.cat || 'Cat 1', destino: ult.destino || 'Exportação',
+      cliente: ult.cliente || lista('clientes')[0] || '',
+      variedade: ult.variedade || lista('variedades')[0] || '',
+      embalagem: ult.embalagem || lista('embalagens')[0] || '',
+      caixasReceb:'', capacidade: ult.capacidade || '8', nf:'', parcela:'', caixasAmostra: ult.caixasAmostra || '5'
+    },
+    def:{}, aquosos:'',
+    diam:['','','',''], diamPred:'', descalibre:'',
+    corPeso:['','','',''], cor:'sim',
+    outros: lista('outros')[0] || '',
+    brix:['','','',''], brixPred:'',
+    embCond:'sim', pallet:'sim', devolucao:'nao',
+    consid:'', considManual:false, assinatura:'', fotos:{}
+  };
+}
+
+/* ============ cálculos ============ */
+function pallets(txt){
+  const out=[];
+  (txt||'').split(/[,;\n]+/).forEach(p=>{
+    p=p.trim(); if(!p) return;
+    const obs=(p.match(/\(.*\)/)||[''])[0];
+    const base=p.replace(/\(.*\)/,'').trim();
+    const m=base.match(/^(\d+)\s*[-–a]\s*(\d+)$/);
+    if(m){const a=+m[1],b=+m[2]; if(b>=a&&b-a<200){for(let i=a;i<=b;i++) out.push(String(i)); return;}}
+    out.push((base+' '+obs).trim());
+  });
+  return out;
+}
+const amostraKg = () => num(A.info.caixasAmostra) * num(A.info.capacidade);
+function pctPeso(g){ const t=amostraKg(); return (isFinite(g)&&t>0) ? g/(t*1000)*100 : NaN; }
+function pontua(valor, t){
+  if(!isFinite(valor)) return t.pts;
+  if(valor<=t.lim) return t.pts;
+  if(t.lim<=0) return 0;
+  const frac = Math.max(0, 1-(valor-t.lim)/t.lim);
+  return Math.round(t.pts*frac*100)/100;
+}
+function stats(arr){
+  const v=arr.map(num).filter(isFinite);
+  if(!v.length) return null;
+  const soma=v.reduce((a,b)=>a+b,0);
+  const freq={}; v.forEach(x=>freq[x]=(freq[x]||0)+1);
+  const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+  const moda = top[0][1]>1 ? +top[0][0] : null;
+  return {n:v.length, soma, media:soma/v.length, min:Math.min(...v), max:Math.max(...v), moda};
+}
+function resultado(){
+  const res=[];
+  cfg.topicos.forEach(t=>{
+    let valor=NaN, txt='', pts=t.pts;
+    if(t.tipo==='peso'){
+      const kg=(A.def[t.id]||[]).map(num).filter(isFinite).reduce((a,b)=>a+b,0);
+      valor=pctPeso(kg); txt=isFinite(valor)?br(valor)+'%':'0,00%'; pts=pontua(isFinite(valor)?valor:0,t);
+    } else if(t.tipo==='unid'){
+      valor=num(A.aquosos)||0; txt=valor+' un'; pts=pontua(valor,t);
+    } else if(t.tipo==='calibre'){
+      valor=num(A.descalibre); txt=isFinite(valor)?br(valor,0)+'%':'–'; pts=pontua(isFinite(valor)?valor:0,t);
+    } else if(t.tipo==='cor'){
+      txt=A.cor==='sim'?'Conforme':'Não conforme'; pts=A.cor==='sim'?t.pts:0;
+    }
+    res.push({t, valor, txt, pts});
+  });
+  const total=res.reduce((a,r)=>a+r.pts,0), poss=res.reduce((a,r)=>a+r.t.pts,0);
+  return {res, total:Math.round(total*100)/100, poss};
+}
+function considAuto(){
+  const linhas=[];
+  cfg.topicos.filter(t=>t.tipo==='peso').forEach(t=>{
+    (t.itens||[]).forEach((nome,i)=>{
+      const p=pctPeso(num((A.def[t.id]||[])[i]));
+      if(isFinite(p)&&p>0) linhas.push(`${t.itens.length===1?t.nome:nome.split('·')[0].split('/')[0].trim()}: ${br(p)}%`);
+    });
+  });
+  if(num(A.aquosos)>0) linhas.push(`Cachos aquosos: ${num(A.aquosos)} un`);
+  if(A.cor!=='sim') linhas.push('Coloração não conforme');
+  if(A.embCond!=='sim') linhas.push('Embalagem não conforme');
+  if(A.pallet!=='sim') linhas.push('Palletização não conforme');
+  if(!linhas.length) return 'A fruta avaliada não apresentou defeitos.';
+  return 'A fruta avaliada apresentou problemas pontuais como:\n'+linhas.join('\n');
+}
+
+/* ============ fotos ============ */
+const FOTO_ROTULO = {info:'Informações · lote / pallets', podridao:'Podridão / fungos', danos:'Danos físicos', aquosos:'Cachos aquosos / translúcidos', degrana:'Degrana', leves:'Defeitos leves', desid:'Desidratação', calibre:'Descalibre · diâmetro', cor:'Coloração · peso', inspecao:'Inspeção de qualidade'};
+const AMOSTRA_DE = {calibre:['diam','mm','Diâmetro'], cor:['corPeso','','Peso'], inspecao:['brix','º','ºBrix']};
+const ICON_CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+const topico = id => cfg.topicos.find(t=>t.id===id);
+
+/* opções de vínculo de cada foto */
+function refsDe(sec){
+  const o=[{v:'',l:'Geral do tópico'}];
+  const t=topico(sec);
+  if(t?.tipo==='peso') t.itens.forEach((n,i)=>o.push({v:'i'+i,l:'Item: '+n}));
+  if(AMOSTRA_DE[sec]) [0,1,2,3].forEach(i=>o.push({v:'a'+i,l:`Amostra nº ${i+1}`}));
+  if(sec==='info') pallets(A.info.pallets).forEach(p=>o.push({v:'p:'+p,l:'Pallet '+p}));
+  if(sec==='inspecao') ['Embalagem','Palletização','Outros defeitos','Devolução'].forEach(x=>o.push({v:'x:'+x,l:x}));
+  return o;
+}
+/* texto que descreve a foto: grupo, item/amostra, valor, hora e aparelho */
+function infoFoto(sec,f){
+  const t=topico(sec); const r=f.ref||''; let item='', valor='';
+  if(r[0]==='i'&&t){ const i=+r.slice(1); item=t.itens[i]; const g=num((A.def[sec]||[])[i]); if(isFinite(g)) valor=`${br(g,g%1?1:0)} g · ${br(pctPeso(g))}%`; }
+  else if(r[0]==='a'){ const i=+r.slice(1); const [k,u,n]=AMOSTRA_DE[sec]; item=`${n} · amostra nº ${i+1}`; const v=A[k][i]; if(v!=='') valor=v+(u?' '+u:''); }
+  else if(r.startsWith('p:')) item='Pallet '+r.slice(2);
+  else if(r.startsWith('x:')) item=r.slice(2);
+  const quando=f.quando?new Date(f.quando).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'';
+  return {grupo:(t?.nome)||FOTO_ROTULO[sec], item, valor, quando, aparelho:f.aparelho||''};
+}
+function fotosHTML(sec){
+  const fs=(A.fotos||{})[sec]||[]; const refs=refsDe(sec);
+  return fs.map((f,i)=>{ const x=infoFoto(sec,f);
+    return `<div class="foto"><img src="${f.src}" alt="Foto ${i+1}: ${esc(x.grupo)} ${esc(x.item)}" data-zoom data-sec="${sec}" data-i="${i}">
+      <button type="button" data-rmfoto="${sec}" data-i="${i}" aria-label="Remover foto">×</button>
+      <div class="leg">${refs.length>1?`<select data-ref="${sec}" data-i="${i}" aria-label="Vincular foto a">${refs.map(o=>`<option value="${esc(o.v)}" ${o.v===(f.ref||'')?'selected':''}>${esc(o.l)}</option>`).join('')}</select>`:''}
+      ${x.valor?`<b>${esc(x.valor)}</b><br>`:''}${esc(x.quando)}</div></div>`; }).join('')
+    + `<label class="add-foto">${ICON_CAM}${fs.length?'Mais fotos':'Foto'}<input type="file" accept="image/*" capture="environment" multiple data-foto="${sec}"></label>`;
+}
+function camBtn(sec,ref){
+  const n=((A.fotos||{})[sec]||[]).filter(f=>f.ref===ref).length;
+  return `<label class="cam ${n?'tem':''}" title="Foto deste item">${ICON_CAM}${n?`<small>${n}</small>`:''}<input type="file" accept="image/*" capture="environment" multiple data-foto="${sec}" data-fref="${ref}" aria-label="Tirar foto"></label>`;
+}
+function caixaFotos(sec){ return `<div class="fotos" id="f-${sec}">${fotosHTML(sec)}</div>`; }
+function redesenhaFotos(sec){
+  const el=$('#f-'+sec); if(el) el.innerHTML=fotosHTML(sec);
+  document.querySelectorAll(`[id^="c-${sec}-"]`).forEach(c=>c.innerHTML=camBtn(sec,c.id.split('-').pop()));
+}
+
+/* lê data/hora e aparelho gravados pela câmera (EXIF) */
+async function lerExif(file){
+  try{
+    const buf=await file.slice(0,262144).arrayBuffer(); const d=new DataView(buf);
+    if(d.getUint16(0)!==0xFFD8) return {};
+    let o=2;
+    while(o<d.byteLength-4){
+      const mk=d.getUint16(o), len=d.getUint16(o+2);
+      if(mk===0xFFE1 && d.getUint32(o+4)===0x45786966){
+        const b=o+10, le=d.getUint16(b)===0x4949;
+        const u16=x=>d.getUint16(x,le), u32=x=>d.getUint32(x,le);
+        const str=(off,n)=>{let s='';for(let i=0;i<n;i++){const c=d.getUint8(off+i); if(!c)break; s+=String.fromCharCode(c);}return s.trim();};
+        const ler=(ifd,out)=>{ const n=u16(b+ifd); for(let i=0;i<n;i++){ const e=b+ifd+2+i*12, tag=u16(e), cnt=u32(e+4); const vo=cnt>4?b+u32(e+8):e+8;
+          if(tag===0x010F) out.make=str(vo,cnt); if(tag===0x0110) out.model=str(vo,cnt); if(tag===0x0132) out.dt=str(vo,cnt);
+          if(tag===0x9003) out.dto=str(vo,cnt); if(tag===0x8769) out.exif=u32(e+8); } return out; };
+        const r=ler(u32(b+4),{}); if(r.exif) ler(r.exif,r);
+        const ds=r.dto||r.dt; let quando='';
+        if(ds){ const m=ds.match(/(\d{4}):(\d\d):(\d\d) (\d\d):(\d\d):(\d\d)/); if(m) quando=new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5],+m[6]).toISOString(); }
+        return {quando, aparelho:[r.make,r.model].filter(Boolean).join(' ')};
+      }
+      if((mk&0xFF00)!==0xFF00) break; o+=2+len;
+    }
+  }catch(e){}
+  return {};
+}
+function comprimir(file, max=1100, q=0.62){
+  return new Promise((ok,err)=>{
+    const url=URL.createObjectURL(file); const im=new Image();
+    im.onload=()=>{ const k=Math.min(1,max/Math.max(im.width,im.height)); const w=Math.round(im.width*k), h=Math.round(im.height*k);
+      const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(im,0,0,w,h); URL.revokeObjectURL(url);
+      ok({src:c.toDataURL('image/jpeg',q), w, h}); };
+    im.onerror=()=>{URL.revokeObjectURL(url); err(new Error('imagem inválida'))};
+    im.src=url;
+  });
+}
+document.addEventListener('change',async e=>{
+  const el=e.target;
+  if(el.dataset.ref!==undefined && el.tagName==='SELECT'){ A.fotos[el.dataset.ref][+el.dataset.i].ref=el.value; redesenhaFotos(el.dataset.ref); return; }
+  if(!el.dataset.foto) return;
+  const sec=el.dataset.foto, ref=el.dataset.fref||''; A.fotos ||= {}; const arr=(A.fotos[sec] ||= []);
+  const files=[...el.files]; el.value='';
+  // várias fotos pelo botão de amostra: distribui nº1, nº2... a partir da escolhida
+  let k=ref[0]==='a'?+ref.slice(1):-1;
+  for(const f of files){
+    try{
+      const meta=await lerExif(f);
+      const r = k>=0 ? 'a'+Math.min(k++,3) : ref;
+      arr.push({...(await comprimir(f)), ref:r, quando: meta.quando || new Date(f.lastModified||Date.now()).toISOString(), aparelho: meta.aparelho||'', arquivo:f.name});
+    }catch(err){ aviso('Uma das imagens não pôde ser lida'); }
+  }
+  redesenhaFotos(sec); if(files.length) aviso(files.length>1?files.length+' fotos adicionadas':'Foto adicionada');
+});
+document.addEventListener('click',e=>{
+  const rm=e.target.closest('[data-rmfoto]');
+  if(rm){ A.fotos[rm.dataset.rmfoto].splice(+rm.dataset.i,1); redesenhaFotos(rm.dataset.rmfoto); return; }
+  const z=e.target.closest('[data-zoom]');
+  if(z){ const zz=$('#zoom'); zz.querySelector('img').src=z.src; const x=infoFoto(z.dataset.sec,A.fotos[z.dataset.sec][+z.dataset.i]);
+    $('#zoomInfo').innerHTML=`<b>${esc(x.grupo)}</b>${x.item?' » '+esc(x.item):''}${x.valor?' · '+esc(x.valor):''}<br>${esc(x.quando)}${x.aparelho?' · '+esc(x.aparelho):''}`;
+    zz.hidden=false; $('#zoomFechar').focus(); }
+});
+$('#zoom').addEventListener('click',e=>{ if(e.target.tagName!=='IMG') $('#zoom').hidden=true; });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') $('#zoom').hidden=true; });
+
+/* ============ formulário ============ */
+function opt(arr,sel){ const a=[...arr]; if(sel&&!a.includes(sel)) a.unshift(sel); return a.map(o=>`<option ${o===sel?'selected':''}>${esc(o)}</option>`).join(''); }
+const classeTxt = I => I.cat||I.destino ? [I.cat,I.destino].filter(Boolean).join(' · ') : (I.classe||'');
+function opcoes(path, ops){
+  const v=path.split('.').reduce((o,k)=>o?.[k],A);
+  return `<div class="pilulas" role="group" data-opc="${path}">${ops.map(o=>`<button type="button" aria-pressed="${o===v}" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
+}
+function campo(lbl, html, cls=''){ return `<label class="campo ${cls}">${lbl}${html}</label>`; }
+function inp(path, type='text', extra=''){
+  const v=path.split('.').reduce((o,k)=>o?.[k],A)??'';
+  return `<input data-p="${path}" type="${type}" value="${esc(v)}" ${extra}>`;
+}
+const SINGULAR={operadores:'operador',avaliadores:'avaliador',clientes:'cliente',variedades:'variedade',embalagens:'tipo de embalagem',outros:'opção'};
+function sel(path, listaK){
+  const v=path.split('.').reduce((o,k)=>o?.[k],A);
+  return `<span class="sel-add"><select data-p="${path}">${opt(lista(listaK),v)}</select><button type="button" class="mais" data-add="${listaK}" aria-label="Adicionar ${SINGULAR[listaK]||'opção'}" title="Adicionar ${SINGULAR[listaK]||'opção'}">+</button></span>
+    <span class="add-linha" hidden><input type="text" data-novo="${listaK}" data-alvo="${path}" placeholder="Nome do novo ${SINGULAR[listaK]||'item'}" autocomplete="off"><button type="button" class="btn peq pri" data-salvar-novo>Salvar</button><button type="button" class="mais" data-cancelar-novo aria-label="Cancelar" title="Cancelar" style="font-size:18px">×</button></span>`;
+}
+function salvarNovo(inp){
+  const nome=inp.value.trim().replace(/\s+/g,' '); const k=inp.dataset.novo;
+  if(!nome){ inp.focus(); aviso('Digite um nome'); return; }
+  const atual=lista(k);
+  const existente=atual.find(x=>x.toLowerCase()===nome.toLowerCase());
+  if(!existente){ cfg.listas[k]=[...atual,nome].join('\n'); LS.set('cfg',cfg); }
+  const valor=existente||nome;
+  const ks=inp.dataset.alvo.split('.'); let o=A; ks.slice(0,-1).forEach(x=>o=o[x]); o[ks.at(-1)]=valor;
+  // atualiza todos os selects que usam essa lista, sem perder o que já foi preenchido
+  document.querySelectorAll(`[data-add="${k}"]`).forEach(b=>{ const s=b.previousElementSibling; const pv=s.dataset.p.split('.').reduce((o,x)=>o?.[x],A); s.innerHTML=opt(lista(k),pv); });
+  fecharNovo(inp.closest('.add-linha'));
+  aviso(existente?`"${valor}" já estava na lista`:`"${valor}" salvo para as próximas avaliações`);
+}
+function fecharNovo(linha){ linha.hidden=true; linha.querySelector('input').value=''; linha.previousElementSibling.hidden=false; linha.previousElementSibling.querySelector('select').focus(); }
+function seg(path, a='Conforme', b='Não conforme', inv=false){
+  const v=A[path];
+  /* inv: para "Há devolução?", o "Sim" é o lado ruim (vermelho) e o "Não" o bom (verde) */
+  return `<span class="seg" data-seg="${path}"><button type="button" class="${inv?'nao':'sim'}" aria-pressed="${v==='sim'}" data-v="sim">${a}</button><button type="button" class="${inv?'sim':'nao'}" aria-pressed="${v==='nao'}" data-v="nao">${b}</button></span>`;
+}
+function amostras(path, sec){
+  return `<div class="amostras">${A[path].map((v,i)=>`<div class="amostra"><input data-a="${path}" data-i="${i}" inputmode="decimal" value="${esc(v)}" placeholder="nº ${i+1}" aria-label="Amostra ${i+1}"><span id="c-${sec}-a${i}">${camBtn(sec,'a'+i)}</span></div>`).join('')}</div><div class="stats" id="st-${path}"></div>`;
+}
+
+function render(){
+  const T=Object.fromEntries(cfg.topicos.map(t=>[t.id,t]));
+  let n=1;
+  const blocoPeso = t => {
+    const linhas=(t.itens||[]).map((nome,i)=>`<div class="item"><span>${esc(nome)}</span><input data-d="${t.id}" data-i="${i}" inputmode="decimal" value="${esc((A.def[t.id]||[])[i]??'')}" placeholder="g" aria-label="${esc(nome)} em gramas"><span class="pct" id="p-${t.id}-${i}">–</span><span id="c-${t.id}-i${i}">${camBtn(t.id,'i'+i)}</span></div>`).join('');
+    return `<section class="bloco"><header><span class="num">${++n}</span><h2>${esc(t.nome)}</h2><span class="selo" id="s-${t.id}"></span></header>
+      <div class="corpo"><div class="itens">${linhas}${t.itens.length>1?`<div class="item total"><span>Total</span><span></span><span class="pct" id="p-${t.id}-t">–</span><span></span></div>`:''}</div>
+      <div class="limite">Peso em gramas, como aparece na balança · limite até ${br(t.lim,1)}% do peso amostrado · vale ${t.pts} pontos</div>${caixaFotos(t.id)}</div></section>`;
+  };
+  let h='';
+  h+=`<section class="bloco"><header><span class="num">1</span><h2>Informações</h2></header><div class="corpo grade">
+    ${campo('Data do recebimento',inp('info.receb','date'))}
+    ${campo('Data de embalagem',inp('info.embal','date'))}
+    ${campo('Data e hora da avaliação',inp('info.avaliacao','datetime-local'))}
+    ${campo('Operador',sel('info.operador','operadores'))}
+    ${campo('Avaliador',sel('info.avaliador','avaliadores'))}
+    <div class="campo larga">Classe inicial
+      <div class="opcoes">${opcoes('info.cat',['Cat 1','Cat 2','Cat 3'])}${opcoes('info.destino',['Exportação','Mercado interno'])}</div></div>
+    ${campo('Cliente',sel('info.cliente','clientes'))}
+    ${campo('Variedade',sel('info.variedade','variedades'))}
+    ${campo('Tipo de embalagem',sel('info.embalagem','embalagens'))}
+    ${campo('Parcela',inp('info.parcela','text','placeholder="129 A"'))}
+    ${campo('Nota fiscal',inp('info.nf','text','inputmode="numeric"'))}
+    ${campo('Caixas recebidas',inp('info.caixasReceb','text','inputmode="numeric"'))}
+    ${campo('Capacidade da caixa (kg)',inp('info.capacidade','text','inputmode="decimal"'))}
+    ${campo('Caixas amostradas',inp('info.caixasAmostra','text','inputmode="numeric"'))}
+    <label class="campo larga">Lote / nº dos pallets${inp('info.pallets','text','placeholder="9445-9453, 2134 (77 cxs)"')}
+      <span class="dica">Use hífen para uma sequência e vírgula para separar.</span><span class="chips" id="chips"></span></label>
+    <div class="larga dica" id="amostraInfo"></div>
+    <div class="larga">${caixaFotos('info')}</div>
+  </div></section>`;
+
+  h+=blocoPeso(T.podridao)+blocoPeso(T.danos);
+  h+=`<section class="bloco"><header><span class="num">${++n}</span><h2>${esc(T.aquosos.nome)}</h2><span class="selo" id="s-aquosos"></span></header>
+    <div class="corpo"><div class="grade">${campo('Quantidade de cachos (unidades)',inp('aquosos','text','inputmode="numeric" placeholder="0"'))}</div>
+    <div class="limite">Limite: ${T.aquosos.lim} unidade(s) · vale ${T.aquosos.pts} pontos</div>${caixaFotos('aquosos')}</div></section>`;
+  h+=blocoPeso(T.degrana)+blocoPeso(T.leves)+blocoPeso(T.desid);
+  h+=`<section class="bloco"><header><span class="num">${++n}</span><h2>${esc(T.calibre.nome)}</h2><span class="selo" id="s-calibre"></span></header>
+    <div class="corpo"><p class="dica" style="margin-top:0">Diâmetro das bagas (mm)</p>${amostras('diam','calibre')}
+    <div class="grade" style="margin-top:12px">${campo('Diâmetro predominante (mm)',inp('diamPred','text','inputmode="decimal"'))}${campo('% de descalibre',inp('descalibre','text','inputmode="decimal" placeholder="0"'))}</div>
+    <div class="limite">Limite: até ${br(T.calibre.lim,0)}% · vale ${T.calibre.pts} pontos</div>${caixaFotos('calibre')}</div></section>`;
+  h+=`<section class="bloco"><header><span class="num">${++n}</span><h2>${esc(T.cor.nome)}</h2><span class="selo" id="s-cor"></span></header>
+    <div class="corpo"><p class="dica" style="margin-top:0">Peso das amostras (g)</p>${amostras('corPeso','cor')}
+    <div class="par" style="margin-top:8px"><span>Coloração</span>${seg('cor')}</div>
+    <div class="limite">Vale ${T.cor.pts} pontos quando conforme</div>${caixaFotos('cor')}</div></section>`;
+  h+=`<section class="bloco"><header><span class="num">${++n}</span><h2>Inspeção de qualidade</h2><span class="selo neutro">sem pontos</span></header>
+    <div class="corpo">
+      <div class="grade">${campo('Outros defeitos',sel('outros','outros'))}</div>
+      <p class="dica" style="margin:14px 0 6px">ºBrix das amostras</p>${amostras('brix','inspecao')}
+      <div class="grade" style="margin:12px 0">${campo('ºBrix predominante',inp('brixPred','text','inputmode="decimal"'))}</div>${caixaFotos('inspecao')}<div style="height:10px"></div>
+      <div class="par"><span>Condição da embalagem</span>${seg('embCond')}</div>
+      <div class="par"><span>Palletização</span>${seg('pallet')}</div>
+      <div class="par"><span>Há devolução?</span>${seg('devolucao','Sim','Não',true)}</div>
+      <label class="campo" style="margin-top:14px">Considerações finais<textarea id="consid" data-p="consid"></textarea>
+        <span class="dica" id="considDica"></span></label>
+      <div style="margin-top:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="dica">Assinatura do responsável pela avaliação</span><button type="button" class="btn peq" id="limparAss">Limpar</button></div>
+      <canvas class="assin" id="assin" aria-label="Área para assinar"></canvas></div>
+    </div></section>`;
+  $('#form').innerHTML=h;
+  // devolução usa sim=Sim, nao=Não – estado "sim" significa houve devolução
+  ligarAssinatura();
+  atualizar();
+}
+
+function atualizar(){
+  // pallets
+  const p=pallets(A.info.pallets);
+  $('#chips').innerHTML = p.length ? p.map(x=>`<span>${esc(x)}</span>`).join('') + `<span style="background:none;color:var(--cinza);font-weight:500">${p.length} pallet(s)</span>` : '';
+  const kg=amostraKg();
+  $('#amostraInfo').textContent = isFinite(kg)&&kg>0 ? `Peso amostrado: ${br(kg,1)} kg — os percentuais de defeito são calculados sobre esse peso.` : 'Informe caixas amostradas e capacidade para calcular os percentuais.';
+  // defeitos
+  cfg.topicos.filter(t=>t.tipo==='peso').forEach(t=>{
+    let tot=0, tem=false;
+    t.itens.forEach((_,i)=>{const v=num((A.def[t.id]||[])[i]); const pc=pctPeso(v); const el=$(`#p-${t.id}-${i}`); if(el) el.textContent=isFinite(pc)?br(pc)+'%':'–'; if(isFinite(v)){tot+=v;tem=true}});
+    const el=$(`#p-${t.id}-t`); if(el) el.textContent = tem ? br(pctPeso(tot))+'%' : '–';
+  });
+  // amostras
+  [['diam','mm'],['corPeso','g'],['brix','º']].forEach(([k,u])=>{
+    const s=stats(A[k]); const el=$('#st-'+k); if(!el) return;
+    el.innerHTML = s ? `<span>Soma <b>${br(s.soma)}</b></span><span>Média <b>${br(s.media)}</b></span><span>Mín <b>${br(s.min)}</b></span><span>Máx <b>${br(s.max)}</b></span>` : '';
+  });
+  // legendas das fotos acompanham os valores
+  document.querySelectorAll('.foto .leg b').length && Object.keys(A.fotos||{}).forEach(sec=>{ if(document.activeElement?.closest?.('.foto')) return; const el=$('#f-'+sec); if(el && (A.fotos[sec]||[]).some(f=>f.ref)) el.querySelectorAll('.foto').forEach((d,i)=>{ const x=infoFoto(sec,A.fotos[sec][i]); const lg=d.querySelector('.leg'); const b=lg.querySelector('b'); if(b) b.textContent=x.valor; }); });
+  // selos
+  const R=resultado();
+  R.res.forEach(r=>{
+    const el=$('#s-'+r.t.id); if(!el) return;
+    const cls = r.pts>=r.t.pts ? 'ok' : r.pts<=0 ? 'nok' : 'parc';
+    el.className='selo '+cls; el.textContent=`${r.txt} · ${br(r.pts,r.pts%1?1:0)}/${r.t.pts}`;
+  });
+  // placar
+  const nota=$('#nota'); nota.querySelector('b').textContent=br(R.total,R.total%1?1:0); nota.classList.toggle('baixa',R.total<R.poss);
+  $('#barras').innerHTML=R.res.map(r=>`<i style="--p:${r.t.pts}" class="${r.pts>=r.t.pts?'':r.pts<=0?'zero':'parcial'}" title="${esc(r.t.nome)}: ${r.pts}/${r.t.pts}"></i>`).join('');
+  // considerações
+  const c=$('#consid');
+  if(!A.considManual){ A.consid=considAuto(); if(document.activeElement!==c) c.value=A.consid; }
+  else if(document.activeElement!==c) c.value=A.consid;
+  $('#considDica').innerHTML = A.considManual ? 'Texto editado à mão. <a href="#" id="considReset">Voltar ao automático</a>' : 'Preenchido sozinho a partir dos defeitos. Pode editar.';
+}
+
+/* eventos do formulário */
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset.p){ const ks=t.dataset.p.split('.'); let o=A; ks.slice(0,-1).forEach(k=>o=o[k]); o[ks.at(-1)]=t.value; if(t.dataset.p==='consid') A.considManual=true; }
+  else if(t.dataset.d){ (A.def[t.dataset.d] ||= [])[+t.dataset.i]=t.value; }
+  else if(t.dataset.a){
+    A[t.dataset.a][+t.dataset.i]=t.value;
+    const s=stats(A[t.dataset.a]);
+    if(t.dataset.a==='diam' && s?.moda!=null && !A._diamPredManual){ A.diamPred=br(s.moda); const el=document.querySelector('[data-p="diamPred"]'); if(el) el.value=A.diamPred; }
+    if(t.dataset.a==='brix' && s?.moda!=null && !A._brixPredManual){ A.brixPred=br(s.moda); const el=document.querySelector('[data-p="brixPred"]'); if(el) el.value=A.brixPred; }
+  }
+  else return;
+  if(t.dataset.p==='diamPred') A._diamPredManual=true;
+  if(t.dataset.p==='brixPred') A._brixPredManual=true;
+  if(document.querySelector('#v-avaliar:not([hidden])')) atualizar();
+});
+document.addEventListener('change',e=>{ if(e.target.matches('select[data-p]')) atualizar(); });
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.seg button');
+  if(b){ const k=b.parentElement.dataset.seg; A[k]=b.dataset.v; b.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); atualizar(); }
+  const mais=e.target.closest('[data-add]');
+  if(mais){ e.preventDefault(); const sa=mais.closest('.sel-add'), ln=sa.nextElementSibling; sa.hidden=true; ln.hidden=false; ln.querySelector('input').focus(); return; }
+  if(e.target.closest('[data-salvar-novo]')){ e.preventDefault(); salvarNovo(e.target.closest('.add-linha').querySelector('input')); return; }
+  if(e.target.closest('[data-cancelar-novo]')){ e.preventDefault(); fecharNovo(e.target.closest('.add-linha')); return; }
+  const op=e.target.closest('.pilulas button');
+  if(op){ const path=op.parentElement.dataset.opc.split('.'); let o=A; path.slice(0,-1).forEach(k=>o=o[k]); o[path.at(-1)]=op.dataset.v;
+    op.parentElement.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===op)); }
+  if(e.target.id==='considReset'){ e.preventDefault(); A.considManual=false; atualizar(); }
+});
+/* Enter pula para o próximo campo (agiliza na esteira) */
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('[data-novo]')){ if(e.key==='Enter'){ e.preventDefault(); salvarNovo(e.target); } if(e.key==='Escape') fecharNovo(e.target.closest('.add-linha')); return; }
+  if(e.key!=='Enter'||!e.target.matches('#form input')) return;
+  e.preventDefault();
+  const all=[...document.querySelectorAll('#form input, #form select')];
+  const nx=all[all.indexOf(e.target)+1]; if(nx){nx.focus(); nx.select?.();}
+});
+
+/* ============ assinatura ============ */
+function ligarAssinatura(){
+  const cv=$('#assin'), ctx=cv.getContext('2d');
+  const ajusta=()=>{const r=cv.getBoundingClientRect(); const dpr=window.devicePixelRatio||1; cv.width=r.width*dpr; cv.height=r.height*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.lineWidth=2.2; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#1f1a24';
+    if(A.assinatura){const im=new Image(); im.onload=()=>ctx.drawImage(im,0,0,r.width,r.height); im.src=A.assinatura;}};
+  ajusta();
+  let des=false, ult;
+  const pos=e=>{const r=cv.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]};
+  cv.onpointerdown=e=>{des=true; ult=pos(e); cv.setPointerCapture(e.pointerId)};
+  cv.onpointermove=e=>{if(!des) return; const p=pos(e); ctx.beginPath(); ctx.moveTo(...ult); ctx.lineTo(...p); ctx.stroke(); ult=p;};
+  cv.onpointerup=cv.onpointercancel=()=>{if(des){des=false; A.assinatura=cv.toDataURL('image/png');}};
+  $('#limparAss').onclick=()=>{ctx.clearRect(0,0,cv.width,cv.height); A.assinatura='';};
+}
+
+/* ============ salvar / histórico ============ */
+function salvar(silencioso){
+  A.resultado = resultado().total;
+  A.salvoEm = new Date().toISOString();
+  const i=historico.findIndex(h=>h.id===A.id);
+  const copia=structuredClone(A);
+  if(i>=0) historico[i]=copia; else historico.unshift(copia);
+  IDB.set('hist',historico).then(ok=>{ if(!silencioso) aviso(ok?'Avaliação salva':'Salva só nesta sessão (armazenamento indisponível)'); });
+}
+function renderHistorico(){
+  const q=($('#busca').value||'').toLowerCase();
+  const itens=historico.filter(h=>!q||JSON.stringify(h.info).toLowerCase().includes(q));
+  if(!historico.length){ $('#lista').innerHTML=`<div class="vazio"><h3>Nenhuma avaliação salva ainda</h3>Faça a primeira na aba Avaliar e toque em Salvar.</div>`; return; }
+  if(!itens.length){ $('#lista').innerHTML=`<div class="vazio"><h3>Nada encontrado</h3>Tente outro lote, pallet ou cliente.</div>`; return; }
+  $('#lista').innerHTML=itens.map(cardReg).join('');
+}
+function cardReg(h){ {const p=pallets(h.info.pallets); return `<article class="reg">
+    <div class="n ${h.resultado<100?'baixa':''}">${br(h.resultado,h.resultado%1?1:0)}</div>
+    <div><h3>${esc(h.info.variedade)} · ${esc(h.info.cliente)}${h.info.parcela?' · parcela '+esc(h.info.parcela):''}</h3>
+    <p>${dataBR(h.info.avaliacao)} · ${esc(h.info.operador)} · ${(()=>{const n=Object.values(h.fotos||{}).flat().length;return n?n+' foto(s) · ':''})()}${p.length?p.length+' pallet(s): '+esc(p.slice(0,4).join(', '))+(p.length>4?'…':''):'sem pallets'}</p></div>
+    <div class="acoes"><button class="btn peq" data-abrir="${h.id}">Abrir</button><button class="btn peq" data-pdf="${h.id}">PDF</button><button class="btn peq wa" data-wa="${h.id}">WhatsApp</button><button class="btn peq" data-del="${h.id}" aria-label="Excluir">Excluir</button></div></article>`} }
+function acoesLista(e){
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.abrir){ A=structuredClone(historico.find(h=>h.id===b.dataset.abrir)); guardarRascunho(); ir('avaliar'); }
+  if(b.dataset.pdf){ const atual=A; A=structuredClone(historico.find(h=>h.id===b.dataset.pdf)); gerarPDF(); A=atual; }
+  if(b.dataset.wa){ const atual=A; A=structuredClone(historico.find(h=>h.id===b.dataset.wa)); enviarWhats().finally(()=>{A=atual;}); }
+  if(b.dataset.del){
+    if(b.dataset.conf){ historico=historico.filter(h=>h.id!==b.dataset.del); IDB.set('hist',historico); renderHistorico(); renderInicio(); aviso('Avaliação excluída'); }
+    else { b.dataset.conf='1'; b.textContent='Confirmar'; b.style.background='var(--nok)'; b.style.color='#fff'; setTimeout(()=>{ if(b.isConnected){delete b.dataset.conf; b.textContent='Excluir'; b.style.cssText='';}},3000); }
+  }
+}
+$('#lista').addEventListener('click',acoesLista);
+$('#ultimas').addEventListener('click',acoesLista);
+$('#busca').addEventListener('input',renderHistorico);
+
+/* ============ PDF ============ */
+/* Mesma ordem do relatório original: resumo dos tópicos e, em seguida, cada tópico com seus dados, fotos e resultado */
+function gerarPDF(){ const r=montarPDF(); if(!r) return; try{ r.doc.save(r.nome); aviso('PDF baixado'); }catch(e){ aviso('Não foi possível baixar o PDF aqui'); } }
+function montarPDF(){
+  if(!window.jspdf){ aviso('Gerador de PDF não carregou. Verifique a internet.'); return null; }
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:'mm',format:'a4'});
+  const R=resultado(), I=A.info, W=210, M=14, BASE=280;
+  const uva=[53,32,64], cinza=[107,101,115], lil=[239,233,243];
+  const pl=pallets(I.pallets);
+  const RES=Object.fromEntries(R.res.map(r=>[r.t.id,r]));
+  let y=0;
+  const cab=()=>{ doc.setFillColor(...uva); doc.rect(0,0,W,12,'F'); doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text('Nova Neruda · Avaliação de qualidade',M,7.8); doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+    doc.text(`${I.variedade||''} · ${dataBR(I.avaliacao)} · nota ${br(R.total,R.total%1?1:0)}`,W-M,7.8,{align:'right'}); y=19; };
+  const cabe=h=>{ if(y+h>BASE){ doc.addPage(); cab(); } };
+  const tabela=(opts)=>{ if(y>40) cabe(((opts.body||[]).length+(opts.head?1:0))*5.8+4); doc.autoTable({margin:{left:M,right:M,top:18,bottom:16},startY:y,styles:{fontSize:8.5,cellPadding:1.4},
+      headStyles:{fillColor:lil,textColor:uva},didDrawPage:d=>{ if(d.pageNumber>1 && d.cursor && doc.getCurrentPageInfo().pageNumber>1){} }, ...opts}); y=doc.lastAutoTable.finalY+3; };
+  const pts=r=>r?`${br(r.pts,r.pts%1?2:0)} / ${r.t.pts} pts`:'';
+  const titulo=(n,nome,dir)=>{ cabe(38); doc.setFillColor(...uva); doc.rect(M,y,9,7,'F'); doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
+    doc.text(String(n),M+4.5,y+4.9,{align:'center'}); doc.setFillColor(...lil); doc.rect(M+9,y,W-2*M-9,7,'F'); doc.setTextColor(...uva); doc.text(nome,M+12,y+4.9);
+    doc.setFont('helvetica','normal'); if(dir) doc.text(dir,W-M-2,y+4.9,{align:'right'}); y+=10; };
+  const linhaRes=(rot,val,cor)=>{ cabe(7); doc.setDrawColor(200); doc.setLineDashPattern([1,1],0); doc.line(M,y+5.5,W-M,y+5.5); doc.setLineDashPattern([],0);
+    doc.setFontSize(8.8); doc.setTextColor(40); doc.text(rot,M+1,y+4); doc.setFont('helvetica','bold'); doc.setTextColor(...(cor||[40,40,40])); doc.text(val,W/2+10,y+4); doc.setFont('helvetica','normal'); y+=7; };
+  const corPts=r=>!r?null:r.pts>=r.t.pts?[63,125,58]:r.pts<=0?[179,54,43]:[168,106,18];
+  const fotos=sec=>{
+    const fs=((A.fotos||{})[sec]||[]).map(f=>({...f,x:infoFoto(sec,f)})); if(!fs.length) return;
+    const CW=(W-2*M-6)/2, IH=60, LH=13, CH=IH+LH;
+    fs.forEach((f,k)=>{ const col=k%2; if(col===0){ if(k>0) y+=CH+4; cabe(CH+2); }
+      const cx=M+col*(CW+6), cy=y; doc.setDrawColor(205); doc.rect(cx,cy,CW,CH);
+      doc.setFontSize(7.4); doc.setTextColor(40); doc.setFont('helvetica','bold');
+      const l1=doc.splitTextToSize(`Grupo: ${f.x.grupo}${f.x.item?'  »  Item: '+f.x.item:''}`,CW-4).slice(0,2);
+      doc.text(l1,cx+2,cy+3.6); doc.setFont('helvetica','normal');
+      const top=cy+3.6+l1.length*3, ih0=IH-(top-cy)+2;
+      const r=Math.min((CW-4)/f.w,(ih0-2)/f.h), iw=f.w*r, ih=f.h*r;
+      try{ doc.addImage(f.src,'JPEG',cx+(CW-iw)/2,top+(ih0-ih)/2,iw,ih,undefined,'FAST'); }catch(e){}
+      doc.setTextColor(...cinza); doc.text([f.x.valor?'Valor: '+f.x.valor:'',[f.x.quando,f.x.aparelho].filter(Boolean).join(' · ')].filter(Boolean),cx+2,cy+IH+5);
+    });
+    y+=CH+5;
+  };
+  const amostraTab=(k,nome,u)=>{ const s=stats(A[k]); if(!s) return;
+    tabela({head:[['Nome','Soma','Média','Mínimo','Máximo']],body:[[`Total (${s.n} amostras)`,br(s.soma),br(s.media),br(s.min),br(s.max)]],styles:{fontSize:8.3,cellPadding:1.3,halign:'right'},columnStyles:{0:{halign:'left'}}});
+    tabela({head:[['Amostragem individual',nome+(u?' ('+u+')':'')]],body:A[k].map((v,i)=>[`nº ${i+1}`,v===''?'–':v]),styles:{fontSize:8.3,cellPadding:1.1},columnStyles:{0:{cellWidth:40},1:{halign:'center'}}});
+  };
+
+  /* página 1: cabeçalho e resumo */
+  doc.setFillColor(...uva); doc.rect(0,0,W,26,'F');
+  doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.text('Nova Neruda',M,11);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text('Avaliação de qualidade · recepção / esteira',M,17.5);
+  doc.setFontSize(9); doc.text(classeTxt(I),M,22.5);
+  doc.setFont('helvetica','bold'); doc.setFontSize(26); doc.text(br(R.total,R.total%1?1:0),W-M-13,16,{align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.text('/ 100',W-M,16,{align:'right'});
+  y=31;
+  tabela({body:[['Data',dataBR(I.avaliacao),'Avaliador',I.avaliador||''],['Avaliado','NOVA NERUDA','Operador',I.operador||'']],theme:'plain',
+    columnStyles:{0:{textColor:cinza,cellWidth:24},2:{textColor:cinza,cellWidth:24}}});
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...uva); doc.text('Resumo dos tópicos',M,y+3); doc.setFont('helvetica','normal'); y+=5;
+  const resumo=[['1','Informações','–','0','0','–'],...R.res.map((r,i)=>[String(i+2),r.t.nome,r.txt,String(r.t.pts),br(r.pts,r.pts%1?2:0),Math.round(r.pts/r.t.pts*100)+'%']),
+    [String(R.res.length+2),'Inspeção de qualidade','–','0','0','–'],['','TOTAL','',String(R.poss),br(R.total,R.total%1?2:0),Math.round(R.total/R.poss*100)+'%']];
+  tabela({head:[['#','Tópico','Resultado','Possível','Obtido','Percentual']],body:resumo,headStyles:{fillColor:uva,textColor:255},
+    columnStyles:{0:{cellWidth:8},2:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'}},
+    didParseCell:d=>{ if(d.section!=='body') return; if(d.row.index===resumo.length-1) d.cell.styles.fontStyle='bold';
+      const r=R.res[d.row.index-1]; if(r && d.column.index===5) d.cell.styles.textColor=corPts(r); }});
+  y+=3; doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...uva); doc.text('Resultados',W/2,y+2,{align:'center'}); doc.setFont('helvetica','normal'); y+=7;
+
+  /* 1 · Informações */
+  let n=1;
+  titulo(n++,'Informações');
+  const kgA=amostraKg();
+  tabela({body:[
+    ['Data do recebimento',dataBR(I.receb)],['Data de embalagem',dataBR(I.embal)],['Data de avaliação | hora',dataBR(I.avaliacao)],['Operador',I.operador],
+    ['Lote | nº pallet',pl.join(', ')||'–'],['Classe inicial',classeTxt(I)],['Cliente',I.cliente],['Variedade',I.variedade],['Tipo de embalagem',I.embalagem],
+    ['Quantidade de caixas recebidas',I.caixasReceb||'–'],['Capacidade da caixa (kg)',I.capacidade||'–'],['Nota fiscal',I.nf||'–'],['Parcela',I.parcela||'–'],
+    ['Quantidade de caixas amostradas',I.caixasAmostra||'–'],['Peso amostrado',isFinite(kgA)?br(kgA,1)+' kg':'–']],
+    theme:'plain',styles:{fontSize:8.5,cellPadding:1.1},columnStyles:{0:{textColor:cinza,cellWidth:70}},
+    didDrawCell:d=>{ if(d.section==='body'){ doc.setDrawColor(225); doc.line(d.cell.x,d.cell.y+d.cell.height,d.cell.x+d.cell.width,d.cell.y+d.cell.height);} }});
+  fotos('info');
+
+  /* tópicos com pontos */
+  cfg.topicos.forEach(t=>{
+    const r=RES[t.id];
+    titulo(n++,t.nome,pts(r));
+    if(t.tipo==='peso'){
+      const linhas=t.itens.map((nome,i)=>{ const g=num((A.def[t.id]||[])[i]); return [nome,isFinite(g)?br(g,g%1?1:0)+' g':'–',isFinite(g)?br(pctPeso(g))+'%':'–']; });
+      tabela({head:[['Parâmetros',`Peso (amostra ${isFinite(kgA)?br(kgA,1)+' kg':'–'})`,`% (limite até ${br(t.lim,1)}%)`]],body:linhas,
+        columnStyles:{1:{halign:'right'},2:{halign:'right'}},headStyles:{fillColor:lil,textColor:uva}});
+      fotos(t.id);
+      linhaRes(`% ${t.nome}`,r.txt,corPts(r));
+    } else if(t.tipo==='unid'){
+      linhaRes(`${t.nome} (unidades) · limite ${t.lim}`,String(num(A.aquosos)||0),corPts(r)); fotos(t.id);
+    } else if(t.tipo==='calibre'){
+      amostraTab('diam','Diâmetro','mm'); fotos(t.id);
+      linhaRes(`% Descalibre (limite até ${br(t.lim,0)}%)`,r.txt,corPts(r));
+      linhaRes('Diâmetro predominante (maioria dos resultados)',A.diamPred||'–');
+    } else if(t.tipo==='cor'){
+      amostraTab('corPeso','Peso',''); fotos(t.id);
+      linhaRes('Coloração',r.txt,corPts(r));
+    }
+  });
+
+  /* Inspeção de qualidade */
+  titulo(n++,'Inspeção de qualidade','sem pontos');
+  linhaRes('Outros defeitos',A.outros||'–');
+  amostraTab('brix','ºBrix',''); fotos('inspecao');
+  const sn=v=>v==='sim'?'Conforme':'Não conforme';
+  linhaRes('ºBrix predominante (maioria dos resultados)',A.brixPred||'–');
+  linhaRes('Condição da embalagem',sn(A.embCond),A.embCond==='sim'?null:[179,54,43]);
+  linhaRes('Palletização',sn(A.pallet),A.pallet==='sim'?null:[179,54,43]);
+  linhaRes('Há devolução?',A.devolucao==='sim'?'Sim':'Não',A.devolucao==='sim'?[179,54,43]:null);
+  const ct=doc.splitTextToSize(A.consid||'',W/2-M-6);
+  cabe(8+ct.length*3.8); doc.setFontSize(8.8); doc.setTextColor(40); doc.text('Considerações finais',M+1,y+4); doc.text(ct,W/2+10,y+4); y+=6+ct.length*3.8;
+  cabe(42); doc.text('Assinatura do responsável pela avaliação',M+1,y+4); y+=6;
+  doc.setDrawColor(190); doc.rect(M,y,W-2*M,30);
+  if(A.assinatura) doc.addImage(A.assinatura,'PNG',W/2-35,y+2,70,26);
+  y+=34; doc.setFontSize(8); doc.setTextColor(...cinza); doc.text(`${I.avaliador||''} · gerado em ${new Date().toLocaleString('pt-BR')}`,M,y);
+
+  const np=doc.getNumberOfPages();
+  for(let pg=1;pg<=np;pg++){ doc.setPage(pg); doc.setFontSize(8); doc.setTextColor(...cinza);
+    doc.text(`© ${new Date().getFullYear()} Ângelo Eduardo. Todos os direitos reservados.`,W/2,290,{align:'center'});
+    doc.text(`${pg}/${np}`,W-M,290,{align:'right'}); }
+  const nome=`Avaliacao_${(I.variedade||'uva').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\W+/g,'_')}_${(I.avaliacao||'').slice(0,10)}_${(pl[0]||'').replace(/\W+/g,'')}.pdf`;
+  return {doc, nome};
+}
+
+/* ============ WhatsApp ============ */
+function foneWa(){ let d=(cfg.dono?.fone||'').replace(/\D/g,''); if(!d) return ''; if(d.length<=11) d='55'+d; return d; }
+function textoResumo(){
+  const I=A.info, R=resultado(), pl=pallets(I.pallets);
+  return [`*Avaliação de qualidade · Nova Neruda*`,
+    `Data: ${dataBR(I.avaliacao)}`,
+    `Variedade: ${I.variedade||'–'} · Cliente: ${I.cliente||'–'}`,
+    `Classe: ${classeTxt(I)}${I.parcela?' · Parcela '+I.parcela:''}`,
+    pl.length?`Pallets: ${pl.join(', ')}`:'',
+    `*Nota: ${br(R.total,R.total%1?1:0)} / 100*`,
+    '', A.consid||'', '', `Operador: ${I.operador||'–'} · Avaliador: ${I.avaliador||'–'}`].filter((x,i,a)=>x!==''||a[i-1]!=='').join('\n');
+}
+function abrirLink(url){ const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noopener'; document.body.appendChild(a); a.click(); a.remove(); }
+async function enviarWhats(){
+  const r=montarPDF(); if(!r) return;
+  const texto=textoResumo();
+  try{
+    const file=new File([r.doc.output('blob')], r.nome, {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:r.nome, text:texto});
+      aviso('Escolha a conversa do dono no WhatsApp'); return;
+    }
+  }catch(e){ if(e && e.name==='AbortError') return; }
+  // sem compartilhamento de arquivo (ex.: computador): baixa o PDF e abre a conversa com a mensagem pronta
+  try{ r.doc.save(r.nome); }catch(e){}
+  const fone=foneWa();
+  abrirLink(`https://wa.me/${fone}?text=${encodeURIComponent(texto+'\n\n(PDF em anexo)')}`);
+  aviso('PDF baixado. Anexe o arquivo na conversa que abriu.');
+}
+
+
+/* ============ ajustes ============ */
+const NOMES_LISTAS={operadores:'Operadores',avaliadores:'Avaliadores',clientes:'Clientes',variedades:'Variedades',embalagens:'Tipos de embalagem',outros:'Outros defeitos (opções)'};
+function renderAjustes(){
+  $('#cfgTopicos').innerHTML=`<tr><th>Tópico</th><th>Limite</th><th>Pontos</th></tr>`+cfg.topicos.map((t,i)=>`<tr><td>${esc(t.nome)}</td>
+    <td>${t.tipo==='cor'?'<span class="dica">conforme / não</span>':`<input data-ct="${i}" data-k="lim" value="${String(t.lim).replace('.',',')}" inputmode="decimal"> ${t.tipo==='unid'?'un':'%'}`}</td>
+    <td><input data-ct="${i}" data-k="pts" value="${t.pts}" inputmode="decimal"></td></tr>`).join('')+
+    `<tr><td><b>Total</b></td><td></td><td><b id="totPts"></b></td></tr>`;
+  totPts();
+  $('#cfgDonoNome').value=cfg.dono?.nome||''; $('#cfgDonoFone').value=cfg.dono?.fone||'';
+  $('#cfgListas').innerHTML=Object.entries(NOMES_LISTAS).map(([k,n])=>`<label class="campo">${n}<textarea data-cl="${k}">${esc(cfg.listas[k]||'')}</textarea><span class="dica">Uma opção por linha</span></label>`).join('');
+}
+function totPts(){ const t=[...document.querySelectorAll('[data-k=pts]')].reduce((a,i)=>a+(num(i.value)||0),0); const el=$('#totPts'); if(el){el.textContent=t; el.style.color=t===100?'':'var(--nok)';} }
+$('#cfgTopicos').addEventListener('input',totPts);
+$('#salvarCfg').onclick=()=>{
+  document.querySelectorAll('[data-ct]').forEach(i=>{const v=num(i.value); if(isFinite(v)) cfg.topicos[+i.dataset.ct][i.dataset.k]=v;});
+  document.querySelectorAll('[data-cl]').forEach(t=>cfg.listas[t.dataset.cl]=t.value);
+  cfg.dono={nome:$('#cfgDonoNome').value.trim(), fone:$('#cfgDonoFone').value.trim()};
+  LS.set('cfg',cfg); aviso('Ajustes salvos'); render();
+};
+$('#restaurarCfg').onclick=()=>{ cfg={topicos:structuredClone(TOPICOS_PADRAO),listas:{...LISTAS_PADRAO},dono:cfg.dono}; LS.set('cfg',cfg); renderAjustes(); render(); aviso('Ajustes de fábrica restaurados'); };
+$('#exportar').onclick=async()=>{ try{ await navigator.clipboard.writeText(JSON.stringify({cfg,historico})); aviso('Backup copiado'); }catch(e){ aviso('Não foi possível copiar'); } };
+
+/* ============ navegação ============ */
+function ir(v){
+  document.querySelectorAll('.abas button').forEach(b=>b.setAttribute('aria-selected',b.dataset.vista===v));
+  document.querySelectorAll('.vista').forEach(s=>s.hidden=s.id!=='v-'+v);
+  $('#placar').hidden = v!=='avaliar';
+  if(v==='inicio') renderInicio(); if(v==='avaliar') render(); if(v==='historico') renderHistorico(); if(v==='ajustes') renderAjustes();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.abas button').forEach(b=>b.onclick=()=>ir(b.dataset.vista));
+document.addEventListener('click',e=>{ const l=e.target.closest('[data-ir]'); if(l) ir(l.dataset.ir); });
+
+/* rascunho: guarda sozinho a avaliação em andamento */
+let tRasc;
+function guardarRascunho(){ clearTimeout(tRasc); tRasc=setTimeout(()=>IDB.set('rascunho',A),600); }
+['input','change'].forEach(ev=>$('#form').addEventListener(ev,()=>{ A._mexido=true; guardarRascunho(); }));
+$('#form').addEventListener('click',e=>{ if(e.target.closest('button')){ A._mexido=true; guardarRascunho(); } });
+$('#form').addEventListener('pointerup',e=>{ if(e.target.id==='assin'){ A._mexido=true; guardarRascunho(); } });
+function emAndamento(){ return A && A._mexido && !A.finalizada; }
+
+function renderInicio(){
+  const h=new Date().getHours();
+  $('#saudacao').textContent = h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
+  $('#hojeTxt').textContent = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  if(emAndamento()){
+    const I=A.info, pl=pallets(I.pallets);
+    $('#andamento').innerHTML=`<div class="andamento"><div class="txt"><b>Avaliação em andamento</b><span>${esc(I.variedade)}${pl.length?' · pallets '+esc(pl.slice(0,3).join(', '))+(pl.length>3?'…':''):''} · nota ${br(resultado().total,0)}</span></div><button class="btn pri" data-ir="avaliar">Continuar</button></div>`;
+    $('#novaAval').classList.remove('pri');
+  } else { $('#andamento').innerHTML=''; $('#novaAval').classList.add('pri'); }
+  $('#novaAval').dataset.conf=''; $('#novaAval').lastChild.textContent=' Nova avaliação ';
+  const hoje=hojeStr(), deHoje=historico.filter(x=>(x.info.avaliacao||'').slice(0,10)===hoje && x.finalizada);
+  const media=deHoje.length?deHoje.reduce((a,x)=>a+(x.resultado||0),0)/deHoje.length:NaN;
+  const abaixo=deHoje.filter(x=>x.resultado<100).length;
+  $('#numeros').innerHTML=`<div><b>${deHoje.length}</b><span>finalizadas hoje</span></div><div><b>${isFinite(media)?br(media,media%1?1:0):'–'}</b><span>nota média hoje</span></div><div><b>${abaixo}</b><span>abaixo de 100</span></div>`;
+  const d=cfg.dono||{};
+  $('#destinoWa').innerHTML = d.fone ? `O PDF vai para <b>${esc(d.nome||'o dono')}</b> · ${esc(d.fone)} pelo WhatsApp. <button class="link" data-ir="ajustes">Trocar</button>`
+    : `Cadastre o WhatsApp do dono para enviar o PDF ao finalizar. <button class="link" data-ir="ajustes">Cadastrar</button>`;
+  const ult=historico.slice(0,3);
+  $('#ultimas').innerHTML = ult.length ? ult.map(cardReg).join('') : `<div class="vazio"><h3>Nenhuma avaliação ainda</h3>Toque em Nova avaliação para começar.</div>`;
+}
+const hojeStr=()=>agora().slice(0,10);
+$('#novaAval').onclick=()=>{
+  const b=$('#novaAval');
+  if(emAndamento() && !b.dataset.conf){ b.dataset.conf='1'; b.lastChild.textContent=' Descartar a em andamento e começar nova? '; b.classList.add('pri'); setTimeout(()=>{ if(b.dataset.conf){ renderInicio(); } },4000); return; }
+  A=novaAvaliacao(); IDB.set('rascunho',null); ir('avaliar');
+};
+
+$('#salvarBtn').onclick=()=>{ salvar(); guardarRascunho(); };
+$('#finalizarBtn').onclick=()=>{
+  A.finalizada=true; salvar(true); IDB.set('rascunho',null);
+  const R=resultado();
+  $('#fimNota').textContent=br(R.total,R.total%1?1:0); $('#fimNota').parentElement.classList.toggle('baixa',R.total<100);
+  const pl=pallets(A.info.pallets);
+  $('#fimDesc').textContent=`${A.info.variedade||''} · ${classeTxt(A.info)}${pl.length?' · '+pl.length+' pallet(s)':''}. Salva no histórico.`;
+  $('#fimWaTxt').textContent = cfg.dono?.nome ? `Enviar PDF para ${cfg.dono.nome}` : 'Enviar PDF no WhatsApp';
+  $('#fim').hidden=false; $('#fimWa').focus();
+};
+$('#fimWa').onclick=()=>enviarWhats();
+$('#fimBaixar').onclick=()=>gerarPDF();
+$('#fimNova').onclick=()=>{ $('#fim').hidden=true; A=novaAvaliacao(); ir('avaliar'); aviso('Nova avaliação'); };
+$('#fimInicio').onclick=()=>{ $('#fim').hidden=true; A=novaAvaliacao(); ir('inicio'); };
+$('#fim').addEventListener('click',e=>{ if(e.target.id==='fim') $('#fim').hidden=true; });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') $('#fim').hidden=true; });
+
+let tAviso; function aviso(m){ const a=$('#aviso'); a.textContent=m; a.classList.add('on'); clearTimeout(tAviso); tAviso=setTimeout(()=>a.classList.remove('on'),2200); }
+$('#ano').textContent=new Date().getFullYear();
+/* app instalado no celular: guarda uma cópia para abrir sem internet (só no site publicado) */
+if('serviceWorker' in navigator && /github\.io$/.test(location.hostname)){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+(async()=>{
+  historico = (await IDB.get('hist')) || LS.get('hist', []);
+  const r = await IDB.get('rascunho');
+  A = (r && r._mexido) ? r : novaAvaliacao();
+  ir('inicio');
+})();
+</script>
+</body>
+</html>
