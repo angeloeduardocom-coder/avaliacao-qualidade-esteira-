@@ -1,6 +1,6 @@
 /* Nova Neruda: guarda o app no celular para abrir sem internet na esteira.
    Ao publicar uma versão nova, aumente o número em VERSAO. */
-const VERSAO = 'nova-neruda-v1';
+const VERSAO = 'nova-neruda-v2';
 const ARQUIVOS = [
   './',
   './index.html',
@@ -9,7 +9,8 @@ const ARQUIVOS = [
   './vendor/jspdf.plugin.autotable.min.js',
   './icones/icone-192.png',
   './icones/icone-512.png',
-  './icones/icone-180.png'
+  './icones/icone-180.png',
+  './icones/icone-maskable-512.png'
 ];
 
 self.addEventListener('install', e => {
