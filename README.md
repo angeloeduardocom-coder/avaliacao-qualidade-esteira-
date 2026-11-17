@@ -21,12 +21,23 @@ Ele substitui o formulário antigo, que era lento.
    - **Android (Chrome):** menu ⋮ → **Adicionar à tela inicial**.
    - **iPhone (Safari):** botão compartilhar → **Adicionar à Tela de Início**.
 
+## Publicar uma versão nova
+
+Aumente o número nos três lugares, sempre com o mesmo valor:
+
+- `APP_VERSAO` em `index.html`
+- `version.json`
+- `VERSAO` em `sw.js`
+
+Nos celulares, a tela inicial mostra "Versão nova disponível" com o botão **Atualizar**. O mesmo botão também fica em **Ajustes → Versão do app**.
+
 ## Arquivos
 
 | Arquivo | Para que serve |
 |---|---|
 | `index.html` | O app inteiro |
-| `sw.js` | Cópia para uso sem internet. A cada versão nova, aumente `VERSAO` |
+| `sw.js` | Cópia para uso sem internet |
+| `version.json` | Número da versão publicada. O app compara com o instalado e avisa quando há versão nova |
 | `manifest.webmanifest`, `icones/` | Ícone e nome na tela inicial do celular |
 | `vendor/` | Gerador de PDF (jsPDF e jsPDF-AutoTable), guardado aqui para funcionar sem internet |
 

@@ -1,6 +1,6 @@
 /* Nova Neruda: guarda o app no celular para abrir sem internet na esteira.
    Ao publicar uma versão nova, aumente o número em VERSAO. */
-const VERSAO = 'nova-neruda-v4';
+const VERSAO = 'nova-neruda-v5';
 const ARQUIVOS = [
   './',
   './index.html',
@@ -30,6 +30,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
+  if (req.url.includes('version.json')) return;   // sempre da internet, para saber se há versão nova
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req)

@@ -128,6 +128,7 @@ main{max-width:980px;margin:0 auto;padding:16px 16px 140px}
 #novaAval{margin-bottom:14px}
 .andamento{display:flex;align-items:center;gap:14px;background:#fff;border:1.5px solid var(--uva-3);border-radius:14px;padding:14px 16px;margin-bottom:12px}
 .andamento .txt{flex:1;min-width:0}
+.nova-versao{border-color:#9fc77a;background:#f3f8ee}
 .andamento b{display:block;font-size:16px}
 .andamento span{color:var(--cinza);font-size:14px}
 .numeros{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
@@ -262,6 +263,7 @@ table.cfg{width:100%;border-collapse:collapse}
       <p class="dia" id="hojeTxt"></p>
       <h2 id="saudacao">Boa tarde</h2>
     </div>
+    <div id="novaVersao"></div>
     <div id="andamento"></div>
     <button class="btn pri grande" id="novaAval">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
@@ -288,6 +290,15 @@ table.cfg{width:100%;border-collapse:collapse}
 
   <!-- AJUSTES -->
   <section class="vista" id="v-ajustes" hidden>
+    <div class="bloco">
+      <header><h2>Versão do app</h2><span class="selo neutro" id="versaoSelo"></span></header>
+      <div class="corpo">
+        <p style="margin:0 0 4px" id="versaoTxt"></p>
+        <p class="dica" style="margin:0 0 12px" id="versaoStatus">Toque em Atualizar app para buscar a versão mais nova.</p>
+        <button class="btn pri" id="atualizarApp">Atualizar app</button>
+        <p class="dica" style="margin:10px 0 0">Avaliações, fotos, nomes cadastrados e a avaliação em andamento continuam guardados.</p>
+      </div>
+    </div>
     <div class="bloco">
       <header><h2>Envio do PDF pelo WhatsApp</h2></header>
       <div class="corpo grade">
@@ -1033,6 +1044,10 @@ document.addEventListener('click',e=>{ const l=e.target.closest('[data-ir]'); if
 /* rascunho: guarda sozinho a avaliação em andamento */
 let tRasc;
 function guardarRascunho(){ clearTimeout(tRasc); tRasc=setTimeout(()=>IDB.set('rascunho',A),600); }
+/* salva na hora quando o app é fechado, minimizado ou trocado de tela */
+const salvarJa=()=>{ if(A && A._mexido){ clearTimeout(tRasc); IDB.set('rascunho',A); } };
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) salvarJa(); });
+window.addEventListener('pagehide',salvarJa);
 ['input','change'].forEach(ev=>$('#form').addEventListener(ev,()=>{ A._mexido=true; guardarRascunho(); }));
 $('#form').addEventListener('click',e=>{ if(e.target.closest('button')){ A._mexido=true; guardarRascunho(); } });
 $('#form').addEventListener('pointerup',e=>{ if(e.target.id==='assin'){ A._mexido=true; guardarRascunho(); } });
@@ -1086,6 +1101,43 @@ let tAviso; function aviso(m){ const a=$('#aviso'); a.textContent=m; a.classList
 $('#ano').textContent=new Date().getFullYear();
 /* app instalado no celular: guarda uma cópia para abrir sem internet (só no site publicado) */
 if('serviceWorker' in navigator && /github\.io$/.test(location.hostname)){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+
+/* ============ versão e atualização ============ */
+/* A cada versão nova: aumentar APP_VERSAO aqui, em version.json e VERSAO no sw.js */
+const APP_VERSAO = { numero: 5, data: '17/11/2026' };
+let versaoNova = null;
+async function buscarVersao(){
+  try{ const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return null; return await r.json(); }catch(e){ return null; }
+}
+function mostrarVersao(){
+  $('#versaoSelo').textContent='v'+APP_VERSAO.numero;
+  $('#versaoTxt').innerHTML=`Versão instalada neste celular: <b>v${APP_VERSAO.numero}</b> · ${APP_VERSAO.data}`;
+  const tem = versaoNova && versaoNova.numero>APP_VERSAO.numero;
+  $('#novaVersao').innerHTML = tem ? `<div class="andamento nova-versao"><div class="txt"><b>Versão nova disponível: v${versaoNova.numero}</b><span>${esc(versaoNova.novidades||'Melhorias no app.')}</span></div><button class="btn pri" data-atualizar>Atualizar</button></div>` : '';
+  if(tem) $('#versaoStatus').innerHTML=`Disponível: <b>v${versaoNova.numero}</b> · ${esc(versaoNova.data||'')}. ${esc(versaoNova.novidades||'')}`;
+}
+async function atualizarApp(){
+  if(!navigator.onLine){ aviso('Sem internet. Conecte e tente de novo.'); return; }
+  const btns=document.querySelectorAll('#atualizarApp,[data-atualizar]'); btns.forEach(b=>{b.disabled=true; b.textContent='Atualizando…';});
+  try{
+    clearTimeout(tRasc); if(A && A._mexido) await IDB.set('rascunho',A);   // não perde a avaliação em andamento
+    const reg = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistration() : null;
+    if(reg) await reg.update().catch(()=>{});
+    if(window.caches){ const ks=await caches.keys(); await Promise.all(ks.filter(k=>k.startsWith('nova-neruda')).map(k=>caches.delete(k))); }
+  }catch(e){}
+  const v=await buscarVersao();
+  try{ sessionStorage.setItem('nn:atualizou', String(v?.numero||'')); }catch(e){}
+  location.reload();
+}
+$('#atualizarApp').onclick=atualizarApp;
+document.addEventListener('click',e=>{ if(e.target.closest('[data-atualizar]')) atualizarApp(); });
+(async()=>{
+  mostrarVersao();
+  try{ const pedido=sessionStorage.getItem('nn:atualizou'); if(pedido!==null){ sessionStorage.removeItem('nn:atualizou');
+    setTimeout(()=>aviso(pedido && +pedido>APP_VERSAO.numero ? 'Atualização baixando. Feche e abra o app mais uma vez.' : `App atualizado · v${APP_VERSAO.numero}`),400); } }catch(e){}
+  versaoNova = await buscarVersao(); mostrarVersao();
+  if(versaoNova && versaoNova.numero<=APP_VERSAO.numero) $('#versaoStatus').textContent='Este celular está na versão mais nova.';
+})();
 (async()=>{
   historico = (await IDB.get('hist')) || LS.get('hist', []);
   const r = await IDB.get('rascunho');
