@@ -371,6 +371,7 @@ const LISTAS_PADRAO = {
   operadores:'Emilayne',
   avaliadores:'Controle qualidade 3',
   produtores:'',
+  clientes:'',
   variedades:'BRS NÚBIA\nBRS VITÓRIA\nARRA 15',
   embalagens:'SACOLA 8,0KG\nCUMBUCA 500G\nCAIXA 4,5KG',
   outros:'Ausência de inseto - exportação\nPresença de inseto'
@@ -410,7 +411,7 @@ function novaAvaliacao(){
       avaliador: ult.avaliador || lista('avaliadores')[0] || '',
       pallets:'', cat: ult.cat || 'Cat 1', destino: ult.destino || 'Exportação',
       produtor: ult.produtor || '',
-      cliente: ['ME','MI'].includes(ult.cliente) ? ult.cliente : 'ME',
+      cliente: ult.cliente || '',
       variedade: ult.variedade || lista('variedades')[0] || '',
       embalagem: ult.embalagem || lista('embalagens')[0] || '',
       caixasReceb:'', capacidade: ult.capacidade || '8', nf:'', parcela:'', caixasAmostra: ult.caixasAmostra || '5'
@@ -628,14 +629,13 @@ function opcoes(path, ops, rotulos={}){
   const v=path.split('.').reduce((o,k)=>o?.[k],A);
   return `<div class="pilulas" role="group" data-opc="${path}">${ops.map(o=>`<button type="button" aria-pressed="${o===v}" data-v="${esc(o)}">${rotulos[o]||esc(o)}</button>`).join('')}</div>`;
 }
-const MERCADO={ME:'Mercado externo', MI:'Mercado interno'};
-const clienteTxt = c => MERCADO[c] ? `${c} · ${MERCADO[c]}` : (c||'–');
+const clienteTxt = c => c||'–';
 function campo(lbl, html, cls=''){ return `<label class="campo ${cls}">${lbl}${html}</label>`; }
 function inp(path, type='text', extra=''){
   const v=path.split('.').reduce((o,k)=>o?.[k],A)??'';
   return `<input data-p="${path}" type="${type}" value="${esc(v)}" ${extra}>`;
 }
-const SINGULAR={operadores:'operador',avaliadores:'avaliador',produtores:'produtor',variedades:'variedade',embalagens:'tipo de embalagem',outros:'opção'};
+const SINGULAR={operadores:'operador',avaliadores:'avaliador',produtores:'produtor',clientes:'cliente',variedades:'variedade',embalagens:'tipo de embalagem',outros:'opção'};
 function sel(path, listaK){
   const v=path.split('.').reduce((o,k)=>o?.[k],A);
   const l=lista(listaK);
@@ -685,7 +685,7 @@ function render(){
     <div class="campo larga">Classe inicial
       <div class="opcoes">${opcoes('info.cat',['Cat 1','Cat 2','Cat 3'])}${opcoes('info.destino',['Exportação','Mercado interno'])}</div></div>
     ${campo('Produtor',sel('info.produtor','produtores'),'larga')}
-    <div class="campo larga">Cliente<div class="opcoes">${opcoes('info.cliente',['ME','MI'],{ME:'<b>ME</b> · Mercado externo',MI:'<b>MI</b> · Mercado interno'})}</div></div>
+    ${campo('Cliente',sel('info.cliente','clientes'),'larga')}
     ${campo('Variedade',sel('info.variedade','variedades'))}
     ${campo('Tipo de embalagem',sel('info.embalagem','embalagens'))}
     ${campo('Parcela',inp('info.parcela','text','placeholder="129 A"'))}
@@ -837,7 +837,7 @@ function renderHistorico(){
 }
 function cardReg(h){ {const p=pallets(h.info.pallets); return `<article class="reg">
     <div class="n ${h.resultado<100?'baixa':''}">${br(h.resultado,h.resultado%1?1:0)}</div>
-    <div><h3>${esc(h.info.variedade)} · ${esc(h.info.cliente)}${h.info.produtor?' · '+esc(h.info.produtor):''}${h.info.parcela?' · parcela '+esc(h.info.parcela):''}</h3>
+    <div><h3>${[h.info.variedade, h.info.produtor, h.info.cliente, h.info.parcela?'parcela '+h.info.parcela:''].filter(Boolean).map(esc).join(' · ')}</h3>
     <p>${dataBR(h.info.avaliacao)} · ${esc(h.info.operador)} · ${(()=>{const n=Object.values(h.fotos||{}).flat().length;return n?n+' foto(s) · ':''})()}${p.length?p.length+' pallet(s): '+esc(p.slice(0,4).join(', '))+(p.length>4?'…':''):'sem pallets'}</p></div>
     <div class="acoes"><button class="btn peq" data-abrir="${h.id}">Abrir</button><button class="btn peq" data-pdf="${h.id}">PDF</button><button class="btn peq wa" data-wa="${h.id}">WhatsApp</button><button class="btn peq" data-del="${h.id}" aria-label="Excluir">Excluir</button></div></article>`} }
 function acoesLista(e){
@@ -1009,7 +1009,7 @@ async function enviarWhats(){
 
 
 /* ============ ajustes ============ */
-const NOMES_LISTAS={operadores:'Operadores',avaliadores:'Avaliadores',produtores:'Produtores',variedades:'Variedades',embalagens:'Tipos de embalagem',outros:'Outros defeitos (opções)'};
+const NOMES_LISTAS={operadores:'Operadores',avaliadores:'Avaliadores',produtores:'Produtores',clientes:'Clientes',variedades:'Variedades',embalagens:'Tipos de embalagem',outros:'Outros defeitos (opções)'};
 function renderAjustes(){
   $('#cfgTopicos').innerHTML=`<tr><th>Tópico</th><th>Limite</th><th>Pontos</th></tr>`+cfg.topicos.map((t,i)=>`<tr><td>${esc(t.nome)}</td>
     <td>${t.tipo==='cor'?'<span class="dica">conforme / não</span>':`<input data-ct="${i}" data-k="lim" value="${String(t.lim).replace('.',',')}" inputmode="decimal"> ${t.tipo==='unid'?'un':'%'}`}</td>
@@ -1104,7 +1104,7 @@ if('serviceWorker' in navigator && /github\.io$/.test(location.hostname)){ navig
 
 /* ============ versão e atualização ============ */
 /* A cada versão nova: aumentar APP_VERSAO aqui, em version.json e VERSAO no sw.js */
-const APP_VERSAO = { numero: 5, data: '17/11/2026' };
+const APP_VERSAO = { numero: 6, data: '17/11/2026' };
 let versaoNova = null;
 async function buscarVersao(){
   try{ const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'}); if(!r.ok) return null; return await r.json(); }catch(e){ return null; }
