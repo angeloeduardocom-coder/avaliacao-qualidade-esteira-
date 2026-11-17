@@ -198,6 +198,11 @@ table.cfg{width:100%;border-collapse:collapse}
 .foto button{position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(31,26,36,.75);color:#fff;font-size:15px;line-height:1;cursor:pointer}
 .add-foto{width:124px;min-height:120px;border:1.5px dashed var(--uva-3);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--uva);font-size:12px;font-weight:600;cursor:pointer;background:#fcfbfd;text-align:center}
 .add-foto:hover{background:var(--lilas)}
+.add-foto small{font-size:11px;font-weight:600;color:var(--cinza)}
+.add-foto.cheio{border-style:solid;border-color:var(--linha);background:#f4f2f6;color:var(--cinza);cursor:default;padding:0 8px}
+.add-foto.cheio:hover{background:#f4f2f6}
+.cam.cheio{background:var(--ok-bg);border-color:#bcd9b4;color:var(--ok);cursor:default}
+.cam.cheio small{background:var(--ok)}
 .add-foto input{position:absolute;width:1px;height:1px;opacity:0}
 .add-foto svg{width:22px;height:22px}
 .zoom{position:fixed;inset:0;background:rgba(20,14,24,.92);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
@@ -211,7 +216,7 @@ table.cfg{width:100%;border-collapse:collapse}
 .cam.tem{background:var(--lilas);border-color:var(--uva-3)}
 .cam input{position:absolute;width:1px;height:1px;opacity:0}
 .cam svg{width:19px;height:19px}
-.cam small{position:absolute;top:-6px;right:-6px;background:var(--uva);color:#fff;border-radius:10px;font-size:10.5px;font-weight:700;padding:0 5px;line-height:16px}
+.cam small{position:absolute;top:-7px;right:-9px;white-space:nowrap;background:var(--uva);color:#fff;border-radius:10px;font-size:10.5px;font-weight:700;padding:0 5px;line-height:16px}
 .amostra{display:flex;gap:4px;align-items:center}
 .amostra .cam{width:34px;height:42px;flex:none}
 .aviso{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--tinta);color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;transition:.2s;z-index:40;pointer-events:none}
@@ -499,6 +504,9 @@ function infoFoto(sec,f){
   const quando=f.quando?new Date(f.quando).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'';
   return {grupo:(t?.nome)||FOTO_ROTULO[sec], item, valor, quando, aparelho:f.aparelho||''};
 }
+/* limite de fotos em cada lugar: geral do tópico, cada item de defeito, cada amostra, cada pallet */
+const MAX_FOTOS = 4;
+const contaFotos = (sec,ref) => ((A.fotos||{})[sec]||[]).filter(f=>(f.ref||'')===ref).length;
 function fotosHTML(sec){
   const fs=(A.fotos||{})[sec]||[]; const refs=refsDe(sec);
   return fs.map((f,i)=>{ const x=infoFoto(sec,f);
@@ -506,11 +514,19 @@ function fotosHTML(sec){
       <button type="button" data-rmfoto="${sec}" data-i="${i}" aria-label="Remover foto">×</button>
       <div class="leg">${refs.length>1?`<select data-ref="${sec}" data-i="${i}" aria-label="Vincular foto a">${refs.map(o=>`<option value="${esc(o.v)}" ${o.v===(f.ref||'')?'selected':''}>${esc(o.l)}</option>`).join('')}</select>`:''}
       ${x.valor?`<b>${esc(x.valor)}</b><br>`:''}${esc(x.quando)}</div></div>`; }).join('')
-    + `<label class="add-foto">${ICON_CAM}${fs.length?'Mais fotos':'Foto'}<input type="file" accept="image/*" capture="environment" multiple data-foto="${sec}"></label>`;
+    + botaoGeral(sec);
+}
+function botaoGeral(sec){
+  const n=contaFotos(sec,'');
+  if(n>=MAX_FOTOS) return `<div class="add-foto cheio" role="note">${ICON_CAM}Limite de ${MAX_FOTOS} fotos<small>Apague uma para trocar</small></div>`;
+  const temItens = topico(sec)?.tipo==='peso' || !!AMOSTRA_DE[sec];
+  const rot = temItens ? (n?'Mais fotos gerais':'Foto geral') : (n?'Mais fotos':'Foto');
+  return `<label class="add-foto">${ICON_CAM}${rot}<small>${n}/${MAX_FOTOS}</small><input type="file" accept="image/*" capture="environment" multiple data-foto="${sec}" aria-label="${n?'Adicionar mais fotos':'Tirar foto'} (${n} de ${MAX_FOTOS})"></label>`;
 }
 function camBtn(sec,ref){
-  const n=((A.fotos||{})[sec]||[]).filter(f=>f.ref===ref).length;
-  return `<label class="cam ${n?'tem':''}" title="Foto deste item">${ICON_CAM}${n?`<small>${n}</small>`:''}<input type="file" accept="image/*" capture="environment" multiple data-foto="${sec}" data-fref="${ref}" aria-label="Tirar foto"></label>`;
+  const n=contaFotos(sec,ref);
+  if(n>=MAX_FOTOS) return `<span class="cam cheio" title="Limite de ${MAX_FOTOS} fotos">${ICON_CAM}<small>${n}/${MAX_FOTOS}</small></span>`;
+  return `<label class="cam ${n?'tem':''}" title="${n?'Mais fotos deste item':'Foto deste item'} (${n} de ${MAX_FOTOS})">${ICON_CAM}${n?`<small>${n}/${MAX_FOTOS}</small>`:''}<input type="file" accept="image/*" capture="environment" multiple data-foto="${sec}" data-fref="${ref}" aria-label="${n?'Adicionar mais fotos':'Tirar foto'} (${n} de ${MAX_FOTOS})"></label>`;
 }
 function caixaFotos(sec){ return `<div class="fotos" id="f-${sec}">${fotosHTML(sec)}</div>`; }
 function redesenhaFotos(sec){
@@ -555,20 +571,31 @@ function comprimir(file, max=1100, q=0.62){
 }
 document.addEventListener('change',async e=>{
   const el=e.target;
-  if(el.dataset.ref!==undefined && el.tagName==='SELECT'){ A.fotos[el.dataset.ref][+el.dataset.i].ref=el.value; redesenhaFotos(el.dataset.ref); return; }
+  if(el.dataset.ref!==undefined && el.tagName==='SELECT'){
+    const sec=el.dataset.ref, foto=A.fotos[sec][+el.dataset.i];
+    if(el.value!==(foto.ref||'') && contaFotos(sec,el.value)>=MAX_FOTOS){ el.value=foto.ref||''; aviso(`Esse campo já tem ${MAX_FOTOS} fotos`); return; }
+    foto.ref=el.value; redesenhaFotos(sec); return; }
   if(!el.dataset.foto) return;
   const sec=el.dataset.foto, ref=el.dataset.fref||''; A.fotos ||= {}; const arr=(A.fotos[sec] ||= []);
-  const files=[...el.files]; el.value='';
-  // várias fotos pelo botão de amostra: distribui nº1, nº2... a partir da escolhida
-  let k=ref[0]==='a'?+ref.slice(1):-1;
-  for(const f of files){
+  let files=[...el.files]; el.value='';
+  if(!files.length) return;
+  // atalho: várias fotos escolhidas na amostra nº 1 com as 4 amostras ainda sem foto → uma em cada amostra (nº1, nº2, nº3, nº4)
+  const distribui = ref==='a0' && files.length>1 && [0,1,2,3].every(i=>contaFotos(sec,'a'+i)===0);
+  const destinos = files.map((_,i)=> distribui ? 'a'+(i%4) : ref);
+  // respeita o limite de 4 fotos em cada lugar
+  const livres={}; let ignoradas=0; const aceitar=[];
+  files.forEach((f,i)=>{ const r=destinos[i]; livres[r] ??= MAX_FOTOS-contaFotos(sec,r); if(livres[r]>0){ livres[r]--; aceitar.push([f,r]); } else ignoradas++; });
+  let ok=0;
+  for(const [f,r] of aceitar){
     try{
       const meta=await lerExif(f);
-      const r = k>=0 ? 'a'+Math.min(k++,3) : ref;
       arr.push({...(await comprimir(f)), ref:r, quando: meta.quando || new Date(f.lastModified||Date.now()).toISOString(), aparelho: meta.aparelho||'', arquivo:f.name});
+      ok++;
     }catch(err){ aviso('Uma das imagens não pôde ser lida'); }
   }
-  redesenhaFotos(sec); if(files.length) aviso(files.length>1?files.length+' fotos adicionadas':'Foto adicionada');
+  redesenhaFotos(sec);
+  if(ignoradas) aviso(`${ok} foto(s) adicionada(s). Máximo de ${MAX_FOTOS} por campo: ${ignoradas} ficou(aram) de fora.`);
+  else aviso(ok>1?ok+' fotos adicionadas':'Foto adicionada');
 });
 document.addEventListener('click',e=>{
   const rm=e.target.closest('[data-rmfoto]');

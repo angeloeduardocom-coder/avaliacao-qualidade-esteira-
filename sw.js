@@ -1,6 +1,6 @@
 /* Nova Neruda: guarda o app no celular para abrir sem internet na esteira.
    Ao publicar uma versão nova, aumente o número em VERSAO. */
-const VERSAO = 'nova-neruda-v2';
+const VERSAO = 'nova-neruda-v3';
 const ARQUIVOS = [
   './',
   './index.html',
