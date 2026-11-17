@@ -168,6 +168,7 @@ main{max-width:980px;margin:0 auto;padding:16px 16px 140px}
 .pilulas{display:flex;flex-wrap:wrap;gap:6px}
 .pilulas button{border:1.5px solid var(--linha);background:#fff;color:var(--tinta);border-radius:999px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:15px}
 .pilulas button:hover{border-color:var(--uva-3)}
+.pilulas button b{font-weight:700}
 .pilulas button[aria-pressed=true]{background:var(--uva);border-color:var(--uva);color:#fff}
 
 /* histórico */
@@ -280,7 +281,7 @@ table.cfg{width:100%;border-collapse:collapse}
   <!-- HISTÓRICO -->
   <section class="vista" id="v-historico" hidden>
     <div class="busca">
-      <input id="busca" type="search" placeholder="Buscar por lote, pallet, cliente ou operador">
+      <input id="busca" type="search" placeholder="Buscar por lote, pallet, produtor ou operador">
     </div>
     <div class="lista" id="lista"></div>
   </section>
@@ -358,7 +359,7 @@ const TOPICOS_PADRAO = [
 const LISTAS_PADRAO = {
   operadores:'Emilayne',
   avaliadores:'Controle qualidade 3',
-  clientes:'ME',
+  produtores:'',
   variedades:'BRS NÚBIA\nBRS VITÓRIA\nARRA 15',
   embalagens:'SACOLA 8,0KG\nCUMBUCA 500G\nCAIXA 4,5KG',
   outros:'Ausência de inseto - exportação\nPresença de inseto'
@@ -397,7 +398,8 @@ function novaAvaliacao(){
       operador: ult.operador || lista('operadores')[0] || '',
       avaliador: ult.avaliador || lista('avaliadores')[0] || '',
       pallets:'', cat: ult.cat || 'Cat 1', destino: ult.destino || 'Exportação',
-      cliente: ult.cliente || lista('clientes')[0] || '',
+      produtor: ult.produtor || '',
+      cliente: ['ME','MI'].includes(ult.cliente) ? ult.cliente : 'ME',
       variedade: ult.variedade || lista('variedades')[0] || '',
       embalagem: ult.embalagem || lista('embalagens')[0] || '',
       caixasReceb:'', capacidade: ult.capacidade || '8', nf:'', parcela:'', caixasAmostra: ult.caixasAmostra || '5'
@@ -611,19 +613,23 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') $('#zoom').hidden=
 /* ============ formulário ============ */
 function opt(arr,sel){ const a=[...arr]; if(sel&&!a.includes(sel)) a.unshift(sel); return a.map(o=>`<option ${o===sel?'selected':''}>${esc(o)}</option>`).join(''); }
 const classeTxt = I => I.cat||I.destino ? [I.cat,I.destino].filter(Boolean).join(' · ') : (I.classe||'');
-function opcoes(path, ops){
+function opcoes(path, ops, rotulos={}){
   const v=path.split('.').reduce((o,k)=>o?.[k],A);
-  return `<div class="pilulas" role="group" data-opc="${path}">${ops.map(o=>`<button type="button" aria-pressed="${o===v}" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
+  return `<div class="pilulas" role="group" data-opc="${path}">${ops.map(o=>`<button type="button" aria-pressed="${o===v}" data-v="${esc(o)}">${rotulos[o]||esc(o)}</button>`).join('')}</div>`;
 }
+const MERCADO={ME:'Mercado externo', MI:'Mercado interno'};
+const clienteTxt = c => MERCADO[c] ? `${c} · ${MERCADO[c]}` : (c||'–');
 function campo(lbl, html, cls=''){ return `<label class="campo ${cls}">${lbl}${html}</label>`; }
 function inp(path, type='text', extra=''){
   const v=path.split('.').reduce((o,k)=>o?.[k],A)??'';
   return `<input data-p="${path}" type="${type}" value="${esc(v)}" ${extra}>`;
 }
-const SINGULAR={operadores:'operador',avaliadores:'avaliador',clientes:'cliente',variedades:'variedade',embalagens:'tipo de embalagem',outros:'opção'};
+const SINGULAR={operadores:'operador',avaliadores:'avaliador',produtores:'produtor',variedades:'variedade',embalagens:'tipo de embalagem',outros:'opção'};
 function sel(path, listaK){
   const v=path.split('.').reduce((o,k)=>o?.[k],A);
-  return `<span class="sel-add"><select data-p="${path}">${opt(lista(listaK),v)}</select><button type="button" class="mais" data-add="${listaK}" aria-label="Adicionar ${SINGULAR[listaK]||'opção'}" title="Adicionar ${SINGULAR[listaK]||'opção'}">+</button></span>
+  const l=lista(listaK);
+  const vazio = !v ? `<option value="" selected disabled>${l.length?'Escolha o '+(SINGULAR[listaK]||'item'):'Toque no + para cadastrar'}</option>` : '';
+  return `<span class="sel-add"><select data-p="${path}">${vazio}${opt(l,v)}</select><button type="button" class="mais" data-add="${listaK}" aria-label="Adicionar ${SINGULAR[listaK]||'opção'}" title="Adicionar ${SINGULAR[listaK]||'opção'}">+</button></span>
     <span class="add-linha" hidden><input type="text" data-novo="${listaK}" data-alvo="${path}" placeholder="Nome do novo ${SINGULAR[listaK]||'item'}" autocomplete="off"><button type="button" class="btn peq pri" data-salvar-novo>Salvar</button><button type="button" class="mais" data-cancelar-novo aria-label="Cancelar" title="Cancelar" style="font-size:18px">×</button></span>`;
 }
 function salvarNovo(inp){
@@ -667,7 +673,8 @@ function render(){
     ${campo('Avaliador',sel('info.avaliador','avaliadores'))}
     <div class="campo larga">Classe inicial
       <div class="opcoes">${opcoes('info.cat',['Cat 1','Cat 2','Cat 3'])}${opcoes('info.destino',['Exportação','Mercado interno'])}</div></div>
-    ${campo('Cliente',sel('info.cliente','clientes'))}
+    ${campo('Produtor',sel('info.produtor','produtores'),'larga')}
+    <div class="campo larga">Cliente<div class="opcoes">${opcoes('info.cliente',['ME','MI'],{ME:'<b>ME</b> · Mercado externo',MI:'<b>MI</b> · Mercado interno'})}</div></div>
     ${campo('Variedade',sel('info.variedade','variedades'))}
     ${campo('Tipo de embalagem',sel('info.embalagem','embalagens'))}
     ${campo('Parcela',inp('info.parcela','text','placeholder="129 A"'))}
@@ -819,7 +826,7 @@ function renderHistorico(){
 }
 function cardReg(h){ {const p=pallets(h.info.pallets); return `<article class="reg">
     <div class="n ${h.resultado<100?'baixa':''}">${br(h.resultado,h.resultado%1?1:0)}</div>
-    <div><h3>${esc(h.info.variedade)} · ${esc(h.info.cliente)}${h.info.parcela?' · parcela '+esc(h.info.parcela):''}</h3>
+    <div><h3>${esc(h.info.variedade)} · ${esc(h.info.cliente)}${h.info.produtor?' · '+esc(h.info.produtor):''}${h.info.parcela?' · parcela '+esc(h.info.parcela):''}</h3>
     <p>${dataBR(h.info.avaliacao)} · ${esc(h.info.operador)} · ${(()=>{const n=Object.values(h.fotos||{}).flat().length;return n?n+' foto(s) · ':''})()}${p.length?p.length+' pallet(s): '+esc(p.slice(0,4).join(', '))+(p.length>4?'…':''):'sem pallets'}</p></div>
     <div class="acoes"><button class="btn peq" data-abrir="${h.id}">Abrir</button><button class="btn peq" data-pdf="${h.id}">PDF</button><button class="btn peq wa" data-wa="${h.id}">WhatsApp</button><button class="btn peq" data-del="${h.id}" aria-label="Excluir">Excluir</button></div></article>`} }
 function acoesLista(e){
@@ -905,7 +912,7 @@ function montarPDF(){
   const kgA=amostraKg();
   tabela({body:[
     ['Data do recebimento',dataBR(I.receb)],['Data de embalagem',dataBR(I.embal)],['Data de avaliação | hora',dataBR(I.avaliacao)],['Operador',I.operador],
-    ['Lote | nº pallet',pl.join(', ')||'–'],['Classe inicial',classeTxt(I)],['Cliente',I.cliente],['Variedade',I.variedade],['Tipo de embalagem',I.embalagem],
+    ['Lote | nº pallet',pl.join(', ')||'–'],['Classe inicial',classeTxt(I)],['Produtor',I.produtor||'–'],['Cliente',clienteTxt(I.cliente)],['Variedade',I.variedade],['Tipo de embalagem',I.embalagem],
     ['Quantidade de caixas recebidas',I.caixasReceb||'–'],['Capacidade da caixa (kg)',I.capacidade||'–'],['Nota fiscal',I.nf||'–'],['Parcela',I.parcela||'–'],
     ['Quantidade de caixas amostradas',I.caixasAmostra||'–'],['Peso amostrado',isFinite(kgA)?br(kgA,1)+' kg':'–']],
     theme:'plain',styles:{fontSize:8.5,cellPadding:1.1},columnStyles:{0:{textColor:cinza,cellWidth:70}},
@@ -964,7 +971,8 @@ function textoResumo(){
   const I=A.info, R=resultado(), pl=pallets(I.pallets);
   return [`*Avaliação de qualidade · Nova Neruda*`,
     `Data: ${dataBR(I.avaliacao)}`,
-    `Variedade: ${I.variedade||'–'} · Cliente: ${I.cliente||'–'}`,
+    I.produtor?`Produtor: ${I.produtor}`:'',
+    `Variedade: ${I.variedade||'–'} · Cliente: ${clienteTxt(I.cliente)}`,
     `Classe: ${classeTxt(I)}${I.parcela?' · Parcela '+I.parcela:''}`,
     pl.length?`Pallets: ${pl.join(', ')}`:'',
     `*Nota: ${br(R.total,R.total%1?1:0)} / 100*`,
@@ -990,7 +998,7 @@ async function enviarWhats(){
 
 
 /* ============ ajustes ============ */
-const NOMES_LISTAS={operadores:'Operadores',avaliadores:'Avaliadores',clientes:'Clientes',variedades:'Variedades',embalagens:'Tipos de embalagem',outros:'Outros defeitos (opções)'};
+const NOMES_LISTAS={operadores:'Operadores',avaliadores:'Avaliadores',produtores:'Produtores',variedades:'Variedades',embalagens:'Tipos de embalagem',outros:'Outros defeitos (opções)'};
 function renderAjustes(){
   $('#cfgTopicos').innerHTML=`<tr><th>Tópico</th><th>Limite</th><th>Pontos</th></tr>`+cfg.topicos.map((t,i)=>`<tr><td>${esc(t.nome)}</td>
     <td>${t.tipo==='cor'?'<span class="dica">conforme / não</span>':`<input data-ct="${i}" data-k="lim" value="${String(t.lim).replace('.',',')}" inputmode="decimal"> ${t.tipo==='unid'?'un':'%'}`}</td>
